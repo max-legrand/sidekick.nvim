@@ -52,46 +52,17 @@ function M:terminal()
 end
 
 ---@return sidekick.cli.terminal.Cmd?
-function M:attach()
-  if not self.started and vim.env.ZELLIJ and Config.cli.mux.create ~= "terminal" then
+function M:create()
+  if vim.env.ZELLIJ and Config.cli.mux.create ~= "terminal" then
     Util.warn({
       ("Zellij does not support `opts.cli.mux.create = %q`."):format(Config.cli.mux.create),
       ("Falling back to `%q`."):format("terminal"),
       "Please update your config.",
     })
   end
-  do
-    -- Zellij's scripting API is too limited, so
-    -- always run embedded sessions
-    return self:terminal()
-  end
-
-  -- if self.started then
-  --   if self.sid == self.mux_session then
-  --     return {
-  --       cmd = { "zellij", "attach", self.sid },
-  --       env = {
-  --         ZELLIJ = false,
-  --         ZELLIJ_SESSION_NAME = false,
-  --         ZELLIJ_PANE_ID = false,
-  --       },
-  --     }
-  --   end
-  --   return -- nothing to do
-  -- end
-  --
-  -- if Config.cli.mux.create == "terminal" or vim.env.ZELLIJ == nil then
-  --   return self:terminal()
-  -- elseif Config.cli.mux.create == "split" then
-  --   local cmd = { "zellij", "run", "--cwd", self.cwd, "-d" }
-  --   cmd[#cmd + 1] = Config.cli.mux.split.vertical and "right" or "down"
-  --   -- local size = Config.cli.mux.split.size
-  --   -- vim.list_extend(cmd, { "-l", tostring(size <= 1 and ((size * 100) .. "%") or size) })
-  --
-  --   cmd[#cmd + 1] = "--"
-  --   vim.list_extend(cmd, self.tool.cmd)
-  --   Util.exec(cmd)
-  -- end
+  -- Zellij's scripting API is too limited, so
+  -- always run embedded sessions
+  return self:terminal()
 end
 
 function M.sessions()

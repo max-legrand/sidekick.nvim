@@ -26,22 +26,31 @@ M.attached = {} ---@type table<string,boolean>
 local B = {}
 B.__index = B
 
+--- Send text to the session
 ---@param text string
 function B:send(text)
   error("Backend:send() not implemented")
 end
 
+--- Initialize the session backend (optional hook)
 function B:init() end
 
+--- Submit the current input to the session
 function B:submit()
   error("Backend:submit() not implemented")
 end
 
+--- Attach to an existing session
 ---@return sidekick.cli.terminal.Cmd?
-function B:attach()
-  error("Backend:attach() not implemented")
+function B:attach() end
+
+--- Start a new session
+---@return sidekick.cli.terminal.Cmd?
+function B:start()
+  error("Backend:start() not implemented")
 end
 
+--- List all active sessions for this backend
 ---@return sidekick.cli.session.State[]
 function B.sessions()
   error("Backend:sessions() not implemented")
@@ -129,7 +138,13 @@ function M.attach(session)
   if M.attached[session.id] then
     return session
   end
-  local cmd = session:attach()
+  ---@type sidekick.cli.terminal.Cmd?
+  local cmd
+  if session.started then
+    cmd = session:attach()
+  else
+    cmd = session:start()
+  end
   M.attached[session.id] = true
   session.attached = true
   if cmd then

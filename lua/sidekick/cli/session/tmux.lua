@@ -8,13 +8,13 @@ M.__index = M
 
 ---@return sidekick.cli.terminal.Cmd?
 function M:attach()
-  if self.started then
-    if self.sid == self.mux_session then
-      return { cmd = { "tmux", "attach-session", "-t", self.sid } }
-    end
-    return -- nothing to do
+  if self.sid == self.mux_session then
+    return { cmd = { "tmux", "attach-session", "-t", self.sid } }
   end
+end
 
+---@return sidekick.cli.terminal.Cmd?
+function M:start()
   if Config.cli.mux.create == "terminal" or vim.env.TMUX == nil then
     local cmd = { "tmux", "new", "-A", "-s", self.id }
     vim.list_extend(cmd, { "-c", self.cwd })
