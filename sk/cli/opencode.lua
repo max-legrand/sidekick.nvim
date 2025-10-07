@@ -62,7 +62,10 @@ function M:submit()
   })
 end
 
-require("sidekick.cli.session").register("opencode", M)
+if vim.fn.has("win32") == 0 then
+  -- only register on non-Windows systems
+  require("sidekick.cli.session").register("opencode", M)
+end
 
 ---@type sidekick.cli.Config
 return {
