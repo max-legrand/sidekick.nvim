@@ -29,6 +29,7 @@ function M:attach()
     if lines and lines[1] then
       self.id = "tmux " .. lines[1]
     end
+    Util.info(("Started **%s** in a new tmux window"):format(self.tool.name))
   elseif Config.cli.mux.create == "split" then
     local cmd = { "tmux", "split-window", "-dP", "-c", self.cwd, "-F", "#{pane_pid}" }
     cmd[#cmd + 1] = Config.cli.mux.split.vertical and "-h" or "-v"
@@ -39,6 +40,7 @@ function M:attach()
     if lines and lines[1] then
       self.id = "tmux " .. lines[1]
     end
+    Util.info(("Started **%s** in a new tmux split"):format(self.tool.name))
   end
 end
 
