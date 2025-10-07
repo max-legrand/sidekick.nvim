@@ -1,6 +1,6 @@
 local Util = require("sidekick.util")
 
-local M = {} -- test comment
+local M = {}
 
 M._watches = {} ---@type table<string, {event: uv.uv_fs_event_t, timer: uv.uv_timer_t}>
 M.enabled = false
