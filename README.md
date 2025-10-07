@@ -380,18 +380,19 @@ local defaults = {
 
 </details>
 
-## 🚀 Usage
+## ✏️ Next Edit Suggestions (NES)
 
-- Copilot NES requests run automatically when you leave insert mode,
-  modify text in normal mode, or after applying an edit.
-- Use the helper functions to control suggestions manually:
-  - `require("sidekick.nes").update()` – request fresh edits for the current buffer.
-  - `require("sidekick.nes").jump()` – move the cursor to the first suggested hunk.
-  - `require("sidekick.nes").apply()` – apply all pending edits and emit the
-    `User SidekickNesDone` autocmd.
-  - `require("sidekick").clear()` – cancel requests and hide overlays.
-  - `require("sidekick.nes").have()` – check if any edits are active in the buffer.
-- Hook into the `User` autocmd (`pattern = "SidekickNesDone"`) to run follow-up logic
+Copilot NES requests run automatically when you leave insert mode,
+modify text in normal mode, or after applying an edit.
+
+Use the helper functions to control suggestions manually:
+
+- `require("sidekick.nes").update()` – request fresh edits for the current buffer.
+- `require("sidekick.nes").jump()` – move the cursor to the first suggested hunk.
+- `require("sidekick.nes").apply()` – apply all pending edits and emit the
+  `User SidekickNesDone` autocmd.
+- `require("sidekick").clear()` – cancel requests and hide overlays.
+- `require("sidekick.nes").have()` – check if any edits are active in the buffer.
   after an edit has been applied.
 
 ## 🤖 AI CLI Integration
@@ -445,7 +446,7 @@ current file, selection, diagnostics, and more.
 
 <img width="1431" height="723" alt="image" src="https://github.com/user-attachments/assets/652867ec-f34e-4036-9b0b-8a4817cc8722" />
 
-**Available Prompts:**
+<details><summary><strong>Available Prompts</strong></summary>
 
 - **changes**: `Can you review my changes?`
 - **diagnostics**: `Can you help me fix the diagnostics in {file}?\n{diagnostics}`
@@ -457,7 +458,9 @@ current file, selection, diagnostics, and more.
 - **review**: `Can you review {file} for any issues or improvements?`
 - **tests**: `Can you write tests for {this}?`
 
-**Available Context Variables:**
+</details>
+
+<details><summary><strong>Available Context Variables</strong></summary>
 
 - `{buffers}`: A list of all open buffers.
 - `{file}`: The current file path.
@@ -469,6 +472,8 @@ current file, selection, diagnostics, and more.
 - `{function}`: The function at cursor (Tree-sitter) - returns location like `function foo @file:10:5`.
 - `{class}`: The class/struct at cursor (Tree-sitter) - returns location.
 - `{this}`: A special context variable. If the current buffer is a file, it resolves to `{position}`. Otherwise, it resolves to the literal string "this" and appends the current `{selection}` to the prompt.
+
+</details>
 
 ### CLI Keymaps
 
@@ -561,7 +566,8 @@ This is equivalent to the following Lua code:
 require("sidekick.cli").show({ name = "claude" })
 ```
 
-### Available Commands
+<details><summary>
+<strong>Available Commands</strong></summary>
 
 Here's a list of the available commands:
 
@@ -584,7 +590,10 @@ Here's a list of the available commands:
 - `send`: Send a message to the current CLI tool.
 - `prompt`: Select a prompt to send to the current CLI tool.
 
-### Examples
+</details>
+
+<details><summary>
+<strong>Examples</strong></summary>
 
 Here are some examples of how to use the `:Sidekick` command:
 
@@ -623,6 +632,8 @@ Here are some examples of how to use the `:Sidekick` command:
   ```lua
   require("sidekick.cli").show({ name = "grok", focus = true })
   ```
+
+  </details>
 
 ## 📟 Statusline Integration
 
@@ -663,7 +674,25 @@ in your statusline.
 
 </details>
 
-## 🔧 Troubleshooting
+## ❓ FAQ
+
+### Does sidekick.nvim replace Copilot's inline suggestions?
+
+No! NES complements inline suggestions. They serve different purposes:
+
+- **Inline completions**: Quick, as-you-type suggestions (use copilot.lua or native `vim.lsp.inline_completion`)
+- **NES**: Larger refactorings and multi-line changes after you pause
+
+You'll want both for the best experience.
+
+### How is this different from copilot.lua or copilot.vim?
+
+`copilot.lua` and `copilot.vim` provide **inline completions** (suggestions as you type). `sidekick.nvim` adds:
+
+- **Next Edit Suggestions (NES)**: Multi-line refactorings and context-aware edits across your file
+- **AI CLI Integration**: Built-in terminal for Claude, Gemini, and other AI tools
+
+Use them together for the complete experience!
 
 ### NES not showing suggestions?
 
@@ -671,7 +700,6 @@ in your statusline.
 2. Check Copilot is signed in: `:LspCopilotSignIn`
 3. Verify the LSP is attached: `:lua vim.print(require("sidekick.config").get_client())`
 4. Try manually triggering: `:Sidekick nes update`
-5. Check if NES is enabled: `:lua vim.print(require("sidekick.config").nes.enabled)`
 
 ### CLI tools not starting?
 
@@ -679,13 +707,6 @@ in your statusline.
 2. Check `:checkhealth sidekick` for tool installation status
 3. Try running the tool directly in your terminal first
 4. Check for errors with `:messages` after attempting to start
-
-### Performance issues with large files?
-
-- **Increase debounce delay**: `opts = { nes = { debounce = 300 } }`
-- **Disable inline diffs**: `opts = { nes = { diff = { inline = false } } }`
-- **Disable NES for specific buffers**: `vim.b.sidekick_nes = false`
-- **Reduce trigger events**: Customize `nes.trigger.events` to be less frequent
 
 ### Terminal sessions not persisting?
 
@@ -696,22 +717,11 @@ opts = {
   cli = {
     mux = {
       enabled = true,
-      backend = "zellij", -- or "tmux"
+      backend = "tmux", -- or "zellij"
     },
   },
 }
 ```
-
-## ❓ FAQ
-
-### How is this different from copilot.lua or copilot.vim?
-
-`copilot.lua` and `copilot.vim` provide **inline completions** (suggestions as you type). `sidekick.nvim` adds:
-
-- **Next Edit Suggestions (NES)**: Multi-line refactorings and context-aware edits across your file
-- **AI CLI Integration**: Built-in terminal for Claude, Gemini, and other AI tools
-
-Use them together for the complete experience!
 
 ### Do I need a GitHub Copilot subscription?
 
@@ -741,7 +751,6 @@ opts = {
     tools = {
       my_tool = {
         cmd = { "my-ai-cli", "--flag" },
-        url = "https://github.com/example/my-tool",
         -- Optional: custom keymaps for this tool
         keys = {
           submit = { "<c-s>", function(t) t:send("\n") end },
@@ -751,15 +760,6 @@ opts = {
   },
 }
 ```
-
-### Does sidekick.nvim replace Copilot's inline suggestions?
-
-No! NES complements inline suggestions. They serve different purposes:
-
-- **Inline completions**: Quick, as-you-type suggestions (use copilot.lua or native `vim.lsp.inline_completion`)
-- **NES**: Larger refactorings and multi-line changes after you pause
-
-You'll want both for the best experience.
 
 ### How do I create custom prompts?
 
