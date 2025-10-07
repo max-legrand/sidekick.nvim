@@ -112,8 +112,9 @@ end
 
 ---Send text to a tmux pane
 function M:send(text)
-  Util.exec({ "tmux", "set-buffer", "-b", "sidekick", text })
-  Util.exec({ "tmux", "paste-buffer", "-b", "sidekick", "-d", "-t", self.tmux_pane_id })
+  local buffer = "sidekick-" .. self.tmux_pane_id
+  Util.exec({ "tmux", "load-buffer", "-b", buffer, "-" }, { stdin = text })
+  Util.exec({ "tmux", "paste-buffer", "-b", buffer, "-d", "-t", self.tmux_pane_id })
 end
 
 ---Send text to a tmux pane
