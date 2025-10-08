@@ -76,7 +76,6 @@ Install with your favorite manager. With [lazy.nvim](https://github.com/folke/la
       },
     },
   },
-  -- stylua: ignore
   keys = {
     {
       "<tab>",
@@ -88,6 +87,12 @@ Install with your favorite manager. With [lazy.nvim](https://github.com/folke/la
       end,
       expr = true,
       desc = "Goto/Apply Next Edit Suggestion",
+    },
+    {
+      "<c-.>",
+      function() require("sidekick.cli").toggle() end,
+      desc = "Sidekick Toggle",
+      mode = { "n", "t", "i", "x" },
     },
     {
       "<leader>aa",
@@ -108,6 +113,11 @@ Install with your favorite manager. With [lazy.nvim](https://github.com/folke/la
       desc = "Send This",
     },
     {
+      "<leader>af",
+      function() require("sidekick.cli").send({ msg = "{file}" }) end,
+      desc = "Send File",
+    },
+    {
       "<leader>av",
       function() require("sidekick.cli").send({ msg = "{selection}" }) end,
       mode = { "x" },
@@ -118,12 +128,6 @@ Install with your favorite manager. With [lazy.nvim](https://github.com/folke/la
       function() require("sidekick.cli").prompt() end,
       mode = { "n", "x" },
       desc = "Sidekick Select Prompt",
-    },
-    {
-      "<c-.>",
-      function() require("sidekick.cli").focus() end,
-      mode = { "n", "x", "i", "t" },
-      desc = "Sidekick Switch Focus",
     },
     -- Example of a keybinding to open Claude directly
     {
@@ -281,24 +285,14 @@ local defaults = {
         width = 80,
         height = 20,
       },
-      --- CLI Tool Keymaps
-      --- default mode is `t`
+      --- CLI Tool Keymaps (default mode is `t`)
       ---@type table<string, sidekick.cli.Keymap|false>
       keys = {
-        -- -- disabled the stopinsert keymaps since it interferes with some tools
-        -- -- Use Neovim's default `<c-\><c-n>` instead
-        -- stopinsert = { "<c-o>", "stopinsert", mode = "t" }, -- enter normal mode
-        hide_n = { "q", "hide", mode = "n" }, -- hide the terminal window in normal mode
-        hide_t = { "<c-q>", "hide" }, -- hide the terminal window in terminal mode
-        win_p = { "<c-w>p", "blur" }, -- leave the cli window
-        prompt = { "<c-p>", "prompt" }, -- insert prompt or context
-        -- example of custom keymap:
-        -- say_hi = {
-        --   "<c-h>",
-        --   function(t)
-        --     t:send("hi!")
-        --   end,
-        -- },
+        hide_n        = { "q"    , "hide"      , mode = "n"  }, -- hide the terminal window in normal mode
+        hide_ctrl_dot = { "<c-.>", "hide"      , mode = "nt" }, -- hide the terminal window in terminal mode
+        hide_ctrl_z   = { "<c-z>", "hide"      , mode = "nt" }, -- hide the terminal window in terminal mode
+        prompt        = { "<c-p>", "prompt"    , mode = "t"  }, -- insert prompt or context
+        stopinsert    = { "<c-q>", "stopinsert", mode = "t"  }, -- enter normal mode
       },
     },
     ---@class sidekick.cli.Mux
@@ -318,34 +312,29 @@ local defaults = {
     },
     ---@type table<string, sidekick.cli.Config|{}>
     tools = {
-      aider = { cmd = { "aider" }, url = "https://github.com/Aider-AI/aider" },
-      amazon_q = { cmd = { "q" }, url = "https://github.com/aws/amazon-q-developer-cli" },
-      claude = { cmd = { "claude" }, url = "https://github.com/anthropics/claude-code" },
-      codex = { cmd = { "codex", "--search" }, url = "https://github.com/openai/codex" },
-      copilot = { cmd = { "copilot", "--banner" }, url = "https://github.com/github/copilot-cli" },
+      aider = { cmd = { "aider" } },
+      amazon_q = { cmd = { "q" } },
+      claude = { cmd = { "claude" } },
+      codex = { cmd = { "codex", "--search" } },
+      copilot = { cmd = { "copilot", "--banner" } },
       crush = {
         cmd = { "crush" },
-        url = "https://github.com/charmbracelet/crush",
-        keys = {
-          -- crush uses <a-p> for its own functionality, so we override the default
-          prompt = { "<a-p>", "prompt" }, -- insert prompt or context
-        },
+        -- crush uses <a-p> for its own functionality, so we override the default
+        keys = { prompt = { "<a-p>", "prompt" } },
       },
-      cursor = { cmd = { "cursor-agent" }, url = "https://cursor.com/cli" },
-      gemini = { cmd = { "gemini" }, url = "https://github.com/google-gemini/gemini-cli" },
-      grok = { cmd = { "grok" }, url = "https://github.com/superagent-ai/grok-cli" },
+      cursor = { cmd = { "cursor-agent" } },
+      gemini = { cmd = { "gemini" } },
+      grok = { cmd = { "grok" } },
       opencode = {
         cmd = { "opencode" },
         -- HACK: https://github.com/sst/opencode/issues/445
         env = { OPENCODE_THEME = "system" },
-        url = "https://github.com/sst/opencode",
       },
-      qwen = { cmd = { "qwen" }, url = "https://github.com/QwenLM/qwen-code" },
+      qwen = { cmd = { "qwen" } },
     },
     --- Add custom context. See `lua/sidekick/context/init.lua`
     ---@type table<string, sidekick.context.Fn>
     context = {},
-    -- stylua: ignore
     ---@type table<string, sidekick.Prompt|string|fun(ctx:sidekick.context.ctx):(string?)>
     prompts = {
       changes         = "Can you review my changes?",

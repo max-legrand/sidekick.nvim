@@ -158,13 +158,16 @@ function M:start()
       elseif not action then
         Util.error(("No action for keymap `%s`: %s"):format(name, tostring(rhs)))
       else
+        local mode = km.mode or "t"
+        mode = type(mode) == "table" and table.concat(mode, "") or mode --[[@as string]]
+        mode = vim.split(mode, "", { plain = true })
         local km_opts = vim.deepcopy(km) ---@type vim.keymap.set.Opts
         ---@diagnostic disable-next-line: inject-field, no-unknown
         km_opts.mode, km_opts[1], km_opts[2] = nil, nil, nil
         km_opts.silent = km_opts.silent ~= false
         km_opts.buffer = self.buf
         km_opts.desc = km_opts.desc or ("Sidekick: %s"):format(name:gsub("^%l", string.upper))
-        vim.keymap.set(km.mode or "t", lhs, function()
+        vim.keymap.set(mode, lhs, function()
           action(self)
         end, km_opts)
       end
