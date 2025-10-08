@@ -65,6 +65,13 @@ function M:start()
   return self:terminal()
 end
 
+---@return sidekick.cli.terminal.Cmd?
+function M:attach()
+  -- Zellij's scripting API is too limited, so
+  -- always run embedded sessions
+  return self:terminal()
+end
+
 function M.sessions()
   local sessions = Util.exec({ "zellij", "list-sessions", "-ns" }, { notify = false }) or {}
   local ret = {} ---@type sidekick.cli.session.State[]
