@@ -298,10 +298,7 @@ function M.apply()
     end
     M._jump(pos)
 
-    vim.api.nvim_exec_autocmds("User", {
-      pattern = "SidekickNesDone",
-      data = { client_id = client.id, buffer = buf },
-    })
+    Util.emit("SidekickNesDone", { client_id = client.id, buffer = buf })
   end)
   M.clear()
   return true

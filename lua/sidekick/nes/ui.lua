@@ -60,9 +60,7 @@ function M.update()
   vim.tbl_map(M.render, edits)
 
   vim.schedule(function()
-    vim.api.nvim_exec_autocmds("User", {
-      pattern = "SidekickNes" .. (#edits == 0 and "Hide" or "Show"),
-    })
+    Util.emit("SidekickNes" .. (#edits == 0 and "Hide" or "Show"))
   end)
 end
 

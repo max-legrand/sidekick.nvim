@@ -224,4 +224,14 @@ function M.get_state(key)
   end
 end
 
+---@param event string
+---@param data? any
+function M.emit(event, data)
+  vim.api.nvim_exec_autocmds("User", {
+    pattern = event,
+    modeline = false,
+    data = data,
+  })
+end
+
 return M
