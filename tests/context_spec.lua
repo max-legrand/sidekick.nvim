@@ -1,7 +1,7 @@
 ---@module 'luassert'
 
-local Context = require("sidekick.cli.context")
 local Config = require("sidekick.config")
+local Context = require("sidekick.cli.context")
 
 describe("context module", function()
   local buf, win
