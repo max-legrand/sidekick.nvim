@@ -1,5 +1,4 @@
 local Config = require("sidekick.config")
-local Util = require("sidekick.util")
 
 local M = {}
 
@@ -134,6 +133,13 @@ function M.sessions()
 end
 
 ---@param session sidekick.cli.Session
+function M.detach(session)
+  M.attached[session.id] = nil
+  session.attached = false
+  return session
+end
+
+---@param session sidekick.cli.Session
 function M.attach(session)
   if M.attached[session.id] then
     return session
@@ -145,8 +151,6 @@ function M.attach(session)
   else
     cmd = session:start()
   end
-  M.attached[session.id] = true
-  session.attached = true
   if cmd then
     return M.new({
       tool = session.tool:clone({ cmd = cmd.cmd, env = cmd.env }),
@@ -157,6 +161,9 @@ function M.attach(session)
       mux_session = session.mux_session,
       attached = true,
     })
+  else
+    M.attached[session.id] = true
+    session.attached = true
   end
   return session
 end

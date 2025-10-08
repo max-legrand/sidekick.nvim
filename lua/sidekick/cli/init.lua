@@ -1,4 +1,5 @@
 local Context = require("sidekick.cli.context")
+local Session = require("sidekick.cli.session")
 local State = require("sidekick.cli.state")
 local Util = require("sidekick.util")
 
