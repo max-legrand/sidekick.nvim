@@ -88,15 +88,20 @@ function M:update()
     return
   end
 
-  local lines = Util.exec({ "ps", "-u", vim.env.USER or "", "-ww", "-o", "pid,ppid,args" })
+  local cmd = { "ps" }
+  if (vim.env.USER or "") ~= "" then
+    vim.list_extend(cmd, { "-u", vim.env.USER or "" })
+  end
+  vim.list_extend(cmd, { "-ww", "-o", "pid,ppid,args" })
+  local lines = Util.exec(cmd)
   lines = vim.list_slice(lines or {}, 2) -- skip header
 
   for _, line in ipairs(lines or {}) do
-    local pid, ppid, cmd = line:match("^%s*(%d+)%s+(%d+)%s+(.*)$")
-    if pid and ppid and cmd then
+    local pid, ppid, args = line:match("^%s*(%d+)%s+(%d+)%s+(.*)$")
+    if pid and ppid and args then
       pid = assert(tonumber(pid), "invalid pid: " .. pid) --[[@as number]]
       ppid = assert(tonumber(ppid), "invalid ppid: " .. ppid) --[[@as number]]
-      self._procs[pid] = setmetatable({ pid = pid, ppid = ppid, cmd = cmd }, {
+      self._procs[pid] = setmetatable({ pid = pid, ppid = ppid, cmd = args }, {
         __index = function(t, k)
           local f = proc_fields[k]
           if f then
