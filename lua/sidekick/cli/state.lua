@@ -45,14 +45,19 @@ end
 
 ---@param session sidekick.cli.Session
 function M.get_state(session)
-  return {
-    tool = session.tool,
+  ---@type sidekick.cli.State
+  return setmetatable({
     session = session,
     installed = true, -- it's running, so it must be installed
-    started = session.started,
-    attached = session.attached,
-    terminal = session.backend == "terminal" and Terminal.get(session.id) or nil,
-  }
+  }, {
+    __index = function(_, k)
+      if k == "tool" or k == "started" or k == "attached" then
+        return session[k]
+      elseif k == "terminal" then
+        return session.backend == "terminal" and Terminal.get(session.id) or nil
+      end
+    end,
+  })
 end
 
 ---@param filter? sidekick.cli.Filter
@@ -174,7 +179,6 @@ function M.attach(state, opts)
       if opts.focus ~= false and terminal:is_running() then
         terminal:focus()
       end
-      state = M.get_state(session)
     end
   else
     Util.info("Attached to `" .. state.tool.name .. "`")
