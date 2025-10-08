@@ -40,10 +40,15 @@ function B:submit()
 end
 
 --- Attach to an existing session
+--- If the backend returns a Cmd, a new terminal session will be spawned
 ---@return sidekick.cli.terminal.Cmd?
 function B:attach() end
 
+--- Detach from an existing session
+function B:detach() end
+
 --- Start a new session
+--- If the backend returns a Cmd, a new terminal session will be spawned
 ---@return sidekick.cli.terminal.Cmd?
 function B:start()
   error("Backend:start() not implemented")
@@ -134,6 +139,9 @@ end
 
 ---@param session sidekick.cli.Session
 function M.detach(session)
+  if M.attached[session.id] then
+    session:detach()
+  end
   M.attached[session.id] = nil
   session.attached = false
   return session
