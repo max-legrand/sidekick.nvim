@@ -80,7 +80,7 @@ local defaults = {
     ---@class sidekick.cli.Mux
     ---@field backend? "tmux"|"zellij" Multiplexer backend to persist CLI sessions
     mux = {
-      backend = "tmux",
+      backend = vim.env.ZELLIJ and "zellij" or "tmux", -- default to tmux unless zellij is detected
       enabled = false,
       -- terminal: new sessions will be created for each CLI tool and shown in a Neovim terminal
       -- window: when run inside a terminal multiplexer, new sessions will be created in a new tab
