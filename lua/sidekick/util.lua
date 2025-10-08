@@ -234,4 +234,18 @@ function M.emit(event, data)
   })
 end
 
+---@generic T: table
+---@param ... T
+---@return T
+function M.merge(...)
+  local todo = {} ---@type table[]
+  for i = 1, select("#", ...) do
+    local o = select(i, ...)
+    if type(o) == "table" then
+      todo[#todo + 1] = vim.deepcopy(o)
+    end
+  end
+  return #todo == 0 and {} or #todo == 1 and todo[1] or vim.tbl_deep_extend("force", unpack(todo))
+end
+
 return M

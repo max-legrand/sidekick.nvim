@@ -239,8 +239,11 @@ function M:start()
   end)
 
   if self.job <= 0 then
-    local display = table.concat(self.tool.cmd, " ")
-    Util.error("Failed to run `" .. display .. "`")
+    if vim.fn.executable(self.tool.cmd[1]) == 0 then
+      Util.error(("`%s` is not installed?"):format(self.tool.cmd[1]))
+    else
+      Util.error(("Failed to run `%s`"):format(table.concat(self.tool.cmd, " ")))
+    end
     self:close()
     return
   end

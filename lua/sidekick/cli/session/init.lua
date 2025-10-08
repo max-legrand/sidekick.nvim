@@ -1,10 +1,11 @@
 local Config = require("sidekick.config")
+local Util = require("sidekick.util")
 
 local M = {}
 
 M.backends = {} ---@type table<string,sidekick.cli.Session>
 M.did_setup = false
-M.attached = {} ---@type table<string,boolean>
+M._attached = {} ---@type table<string,sidekick.cli.Session>
 
 ---@class sidekick.cli.session.State
 ---@field id string unique id of the running tool (typically pid of tool)
@@ -12,7 +13,6 @@ M.attached = {} ---@type table<string,boolean>
 ---@field tool sidekick.cli.Tool|string
 ---@field backend? string
 ---@field started? boolean
----@field attached? boolean
 ---@field mux_session? string
 ---@field mux_backend? string
 
@@ -54,6 +54,16 @@ function B:start()
   error("Backend:start() not implemented")
 end
 
+--- Check if the session is still running
+--- @return boolean
+function B:is_running()
+  error("Backend:is_running() not implemented")
+end
+
+function B:is_attached()
+  return M._attached[self.id] ~= nil
+end
+
 --- List all active sessions for this backend
 ---@return sidekick.cli.session.State[]
 function B.sessions()
@@ -64,7 +74,6 @@ end
 function M.new(state)
   local tool = state.tool
   tool = type(tool) == "string" and Config.get_tool(tool) or tool --[[@as sidekick.cli.Tool]]
-
   local backend = state.backend or (Config.cli.mux.enabled and Config.cli.mux.backend or "terminal")
   local super = assert(M.backends[backend], "unknown backend: " .. backend)
   local meta = getmetatable(state)
@@ -75,7 +84,6 @@ function M.new(state)
   self.backend = backend
   self.sid = M.sid({ tool = tool.name, cwd = self.cwd })
   self.id = self.id or self.sid
-  self.attached = self.attached or M.attached[self.id] or false
   if meta ~= super and self.init then
     self:init()
   end
@@ -126,12 +134,16 @@ function M.sessions()
       s.backend = name
       s.started = true
       ret[#ret + 1] = M.new(s)
+      assert(not ids[s.id], "duplicate session id: " .. s.id)
       ids[s.id] = true
+      if M._attached[s.id] then
+        M._attached[s.id] = ret[#ret] -- update to latest session instance
+      end
     end
   end
-  for id in pairs(M.attached) do
-    if not ids[id] then
-      M.attached[id] = nil
+  for id in pairs(M._attached) do
+    if not ids[id] then -- session is no longer running
+      M.detach(M._attached[id])
     end
   end
   return ret
@@ -139,17 +151,17 @@ end
 
 ---@param session sidekick.cli.Session
 function M.detach(session)
-  if M.attached[session.id] then
+  if M._attached[session.id] then
     session:detach()
+    Util.emit("SidekickCliDetach", { id = session.id })
+    M._attached[session.id] = nil
   end
-  M.attached[session.id] = nil
-  session.attached = false
   return session
 end
 
 ---@param session sidekick.cli.Session
 function M.attach(session)
-  if M.attached[session.id] then
+  if M._attached[session.id] then
     return session
   end
   ---@type sidekick.cli.terminal.Cmd?
@@ -160,20 +172,31 @@ function M.attach(session)
     cmd = session:start()
   end
   if cmd then
-    return M.new({
+    session = M.new({
       tool = session.tool:clone({ cmd = cmd.cmd, env = cmd.env }),
       cwd = session.cwd,
       id = session.sid,
       backend = "terminal",
       mux_backend = session.backend,
       mux_session = session.mux_session,
-      attached = true,
     })
-  else
-    M.attached[session.id] = true
-    session.attached = true
+    session:start()
   end
+  M._attached[session.id] = session
+  Util.emit("SidekickCliAttach", { id = session.id })
   return session
+end
+
+function M.attached()
+  local ret = {} ---@type table<string,sidekick.cli.Session>
+  for id, s in pairs(M._attached) do
+    if s:is_running() then
+      ret[id] = s
+    else
+      M.detach(s)
+    end
+  end
+  return ret
 end
 
 return M

@@ -1,5 +1,6 @@
 ---@class sidekick.cli.session.Opencode: sidekick.cli.Session
 ---@field port number
+---@field pid number
 ---@field base_url string
 local M = {}
 M.__index = M
@@ -36,6 +37,7 @@ function M.sessions()
     if port then
       ret[#ret + 1] = {
         id = "opencode-" .. proc.pid,
+        pid = proc.pid,
         tool = "opencode",
         cwd = proc.cwd,
         port = port,
@@ -47,6 +49,10 @@ function M.sessions()
 end
 
 function M:attach() end
+
+function M:is_running()
+  return self.pid and vim.api.nvim_get_proc(self.pid) ~= nil
+end
 
 function M:send(text)
   require("sidekick.util").curl(self.base_url .. "/tui/append-prompt", {

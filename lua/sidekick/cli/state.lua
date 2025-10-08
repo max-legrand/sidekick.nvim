@@ -26,9 +26,8 @@ local M = {}
 ---@field filter? sidekick.cli.Filter
 ---@field show? boolean
 ---@field focus? boolean
----@field create? boolean
+---@field attach? boolean
 ---@field all? boolean
----@field state? sidekick.cli.State
 
 ---@param t sidekick.cli.State
 ---@param filter? sidekick.cli.Filter
@@ -51,8 +50,10 @@ function M.get_state(session)
     installed = true, -- it's running, so it must be installed
   }, {
     __index = function(_, k)
-      if k == "tool" or k == "started" or k == "attached" then
+      if k == "tool" or k == "started" then
         return session[k]
+      elseif k == "attached" then
+        return session:is_attached()
       elseif k == "terminal" then
         return session.backend == "terminal" and Terminal.get(session.id) or nil
       end
@@ -63,9 +64,10 @@ end
 ---@param filter? sidekick.cli.Filter
 ---@return sidekick.cli.State[]
 function M.get(filter)
+  filter = filter or {}
   local all = {} ---@type sidekick.cli.State[]
   local sids = {} ---@type table<string, boolean>
-  local sessions = Session.sessions()
+  local sessions = filter.attached and Session.attached() or Session.sessions()
   local terminals = {} ---@type table<string, boolean>
 
   for _, s in pairs(sessions) do
@@ -87,13 +89,15 @@ function M.get(filter)
     end
   end
 
-  for name, tool in pairs(Config.tools()) do
-    local sid = Session.sid({ tool = name })
-    if not sids[sid] then
-      all[#all + 1] = {
-        tool = tool,
-        installed = vim.fn.executable(tool.cmd[1]) == 1,
-      }
+  if not filter.attached then
+    for name, tool in pairs(Config.tools()) do
+      local sid = Session.sid({ tool = name })
+      if not sids[sid] then
+        all[#all + 1] = {
+          tool = tool,
+          installed = vim.fn.executable(tool.cmd[1]) == 1,
+        }
+      end
     end
   end
 
@@ -128,50 +132,55 @@ function M.get(filter)
   return ret
 end
 
----@param cb fun(state: sidekick.cli.State, created?: boolean)
----@param ... sidekick.cli.With
-function M.with(cb, ...)
-  local todo = { {} } ---@type sidekick.cli.With[]
-  for i = 1, select("#", ...) do
-    local o = select(i, ...)
-    if type(o) == "table" then
-      todo[#todo + 1] = o
-    end
-  end
-  local opts = vim.tbl_deep_extend("force", unpack(todo)) ---@type sidekick.cli.With
+--- Executes a callback with one or more attached sessions.
+---@param cb fun(state: sidekick.cli.State, attached?: boolean):any?
+---@param opts? sidekick.cli.With
+function M.with(cb, opts)
+  opts = opts or {}
   cb = vim.schedule_wrap(cb)
-  local filter = vim.deepcopy(opts.filter or {})
-  filter.attached = true
-  local tools = opts.state and { opts.state } or M.get(filter)
-  tools = opts.all and tools or { tools[1] } -- FIXME: should be last used
-  if #tools == 0 and opts.create then
+
+  ---@param state sidekick.cli.State
+  local use = vim.schedule_wrap(function(state)
+    if not state then
+      return
+    end
+    local ret, attached = M.attach(state, { show = opts.show, focus = opts.focus })
+    cb(ret, attached)
+  end)
+
+  local filter_attached = Util.merge(opts.filter, { attached = true })
+  local attached = M.get(filter_attached)
+
+  if #attached == 0 and opts.attach then
     require("sidekick.cli.ui.select").select({
       auto = true,
       filter = opts.filter,
-      cb = function(state)
-        if not state then
-          return
-        end
-        cb(M.attach(state, { show = opts.show, focus = opts.focus }), true)
-      end,
+      cb = use,
+    })
+  elseif #attached > 1 and not opts.all then
+    require("sidekick.cli.ui.select").select({
+      auto = true,
+      filter = filter_attached,
+      cb = use,
     })
   else
-    vim.tbl_map(cb, tools)
+    vim.tbl_map(use, attached)
   end
 end
 
 ---@param state sidekick.cli.State
 ---@param opts? {show?:boolean, focus?:boolean}
+---@return sidekick.cli.State state, boolean attached whether we just attached
 function M.attach(state, opts)
   opts = opts or {}
+  local attached = state.session == nil or not state.attached
   local tool = state.tool
-  if vim.fn.executable(tool.cmd[1]) == 0 then
-    Util.error(("`%s` is not installed"):format(tool.cmd[1]))
-    return
-  end
+
+  -- if the session is already attached, the below is a no-op
   local session = state.session or Session.new({ tool = tool.name })
   session = Session.attach(session)
-  state = M.get_state(session)
+
+  state = M.get_state(session) -- update state
   local terminal = state.terminal
   if terminal then
     if opts.show then
@@ -180,10 +189,10 @@ function M.attach(state, opts)
         terminal:focus()
       end
     end
-  else
+  elseif attached then
     Util.info("Attached to `" .. state.tool.name .. "`")
   end
-  return state
+  return state, attached
 end
 
 return M

@@ -3,6 +3,7 @@ local Util = require("sidekick.util")
 
 ---@class sidekick.cli.muxer.Tmux: sidekick.cli.Session
 ---@field tmux_pane_id string
+---@field tmux_pid number
 local M = {}
 M.__index = M
 
@@ -50,9 +51,13 @@ function M:spawn(cmd)
     self.id = pane.skid
     self.tmux_pane_id = pane.id
     self.mux_session = pane.session_name
+    self.tmux_pid = pane.pid
     self.started = true
-    self.attached = true
   end
+end
+
+function M:is_running()
+  return self.tmux_pid and vim.api.nvim_get_proc(self.tmux_pid) ~= nil
 end
 
 ---@param ret string[]
@@ -106,6 +111,7 @@ function M.sessions()
             cwd = proc.cwd or pane.cwd,
             tool = tool,
             tmux_pane_id = pane.id,
+            tmux_pid = pane.pid,
             mux_session = pane.session_name,
           }
           return true

@@ -1,5 +1,4 @@
 local Context = require("sidekick.cli.context")
-local Session = require("sidekick.cli.session")
 local State = require("sidekick.cli.state")
 local Util = require("sidekick.util")
 
@@ -23,9 +22,11 @@ local M = {}
 ---@field name? string
 ---@field focus? boolean
 ---@field filter? sidekick.cli.Filter
+---@field all? boolean
 
 ---@class sidekick.cli.Hide
 ---@field name? string
+---@field filter? sidekick.cli.Filter
 ---@field all? boolean
 
 ---@class sidekick.cli.Send: sidekick.cli.Show,sidekick.cli.Message
@@ -38,10 +39,12 @@ local M = {}
 ---@field [2] string|sidekick.cli.Action
 ---@field mode? string|string[]
 
----@param opts? sidekick.cli.Show|string
-local function show_opts(opts)
+---@generic T: {name?:string, filter?:sidekick.cli.Filter}
+---@param opts? T|string
+---@return T
+local function filter_opts(opts)
   opts = type(opts) == "string" and { name = opts } or opts or {}
-  ---@cast opts sidekick.cli.Show
+  ---@cast opts {name?:string, filter?:sidekick.cli.Filter}
   opts.filter = opts.filter or {}
   opts.filter.name = opts.name or opts.filter.name or nil
   return opts
@@ -77,60 +80,80 @@ end
 ---@param opts? sidekick.cli.Show
 ---@overload fun(name: string)
 function M.show(opts)
-  opts = show_opts(opts)
-  M.with(function(t) end, { filter = opts.filter, create = true, show = true, focus = opts.focus })
+  opts = filter_opts(opts)
+  State.with(function() end, {
+    all = opts.all,
+    attach = true,
+    filter = opts.filter,
+    focus = opts.focus,
+    show = true,
+  })
 end
 
 ---@param opts? sidekick.cli.Show
 ---@overload fun(name: string)
 function M.toggle(opts)
-  opts = show_opts(opts)
-  State.with(function(state, created)
-    local t = state.terminal
-    if not t or created then
+  opts = filter_opts(opts)
+  State.with(function(state, attached)
+    if not state.terminal then
       return
     end
-    t:toggle()
-    if t:is_open() and opts.focus ~= false then
-      t:focus()
+    if not attached then
+      state.terminal:toggle()
     end
-  end, { filter = opts.filter, create = true, show = true, focus = opts.focus })
+    if state.terminal:is_open() and opts.focus ~= false then
+      state.terminal:focus()
+    end
+  end, {
+    attach = true,
+    filter = opts.filter,
+  })
 end
 
 --- Toggle focus of the terminal window if it is already open
 ---@param opts? sidekick.cli.Show
 ---@overload fun(name: string)
 function M.focus(opts)
-  opts = show_opts(opts)
+  opts = filter_opts(opts)
   State.with(function(state)
-    local t = state.terminal
-    if not t then
+    if not state.terminal then
       return
     end
-    if t:is_focused() then
-      t:blur()
+    if state.terminal:is_focused() then
+      state.terminal:blur()
     else
-      t:focus()
+      state.terminal:focus()
     end
-  end, { filter = opts.filter, create = true, show = true, focus = opts.focus })
+  end, {
+    attach = true,
+    filter = opts.filter,
+    focus = false,
+    show = true,
+  })
 end
 
 ---@param opts? sidekick.cli.Hide
 ---@overload fun(name: string)
 function M.hide(opts)
-  opts = type(opts) == "string" and { name = opts } or opts or {}
-  M.with(function(t)
-    t:hide()
-  end, { filter = { name = opts.name, running = true }, all = opts.all }, { filter = { terminal = true } })
+  opts = filter_opts(opts)
+  State.with(function(state)
+    return state.terminal and state.terminal:hide()
+  end, {
+    all = opts.all,
+    filter = Util.merge(opts.filter, { terminal = true }),
+  })
 end
 
 ---@param opts? sidekick.cli.Hide
 ---@overload fun(name: string)
 function M.close(opts)
-  opts = type(opts) == "string" and { name = opts } or opts or {}
-  M.with(function(t)
-    t:close()
-  end, { filter = { name = opts.name, running = true }, all = opts.all }, { filter = { terminal = true } })
+  opts = filter_opts(opts)
+  State.with(function(state)
+    return state.terminal and state.terminal:close()
+  end, {
+    all = opts.all,
+    filter = Util.merge(opts.filter, { terminal = true }),
+  })
 end
 
 ---@param opts? sidekick.cli.Message|string
@@ -157,15 +180,17 @@ function M.send(opts)
   State.with(function(state)
     Util.exit_visual_mode()
     vim.schedule(function()
-      if opts.focus ~= false and state.terminal then
-        state.terminal:focus()
-      end
       state.session:send(msg .. "\n")
       if opts.submit then
         state.session:submit()
       end
     end)
-  end, { filter = opts.filter, create = true, show = true })
+  end, {
+    attach = true,
+    filter = opts.filter,
+    focus = opts.focus,
+    show = true,
+  })
 end
 
 ---@deprecated use `require("sidekick.cli").prompt()`
