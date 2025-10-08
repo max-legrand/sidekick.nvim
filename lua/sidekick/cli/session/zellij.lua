@@ -52,7 +52,7 @@ function M:terminal()
 end
 
 ---@return sidekick.cli.terminal.Cmd?
-function M:create()
+function M:start()
   if vim.env.ZELLIJ and Config.cli.mux.create ~= "terminal" then
     Util.warn({
       ("Zellij does not support `opts.cli.mux.create = %q`."):format(Config.cli.mux.create),
