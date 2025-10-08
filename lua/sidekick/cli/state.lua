@@ -128,7 +128,7 @@ function M.get(filter)
   return ret
 end
 
----@param cb fun(state: sidekick.cli.State)
+---@param cb fun(state: sidekick.cli.State, created?: boolean)
 ---@param ... sidekick.cli.With
 function M.with(cb, ...)
   local todo = { {} } ---@type sidekick.cli.With[]
@@ -152,7 +152,7 @@ function M.with(cb, ...)
         if not state then
           return
         end
-        cb(M.attach(state, { show = opts.show, focus = opts.focus }))
+        cb(M.attach(state, { show = opts.show, focus = opts.focus }), true)
       end,
     })
   else

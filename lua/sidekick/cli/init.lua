@@ -85,16 +85,16 @@ end
 ---@overload fun(name: string)
 function M.toggle(opts)
   opts = show_opts(opts)
-  State.with(function(state)
+  State.with(function(state, created)
     local t = state.terminal
-    if not t then
+    if not t or created then
       return
     end
     t:toggle()
     if t:is_open() and opts.focus ~= false then
       t:focus()
     end
-  end, { filter = opts.filter, create = true })
+  end, { filter = opts.filter, create = true, show = true, focus = opts.focus })
 end
 
 --- Toggle focus of the terminal window if it is already open
