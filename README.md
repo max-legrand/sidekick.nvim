@@ -367,6 +367,7 @@ local defaults = {
     },
   },
   ui = {
+    -- stylua: ignore
     icons = {
       attached          = " ",
       started           = " ",
