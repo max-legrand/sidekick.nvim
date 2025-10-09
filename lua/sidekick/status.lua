@@ -9,6 +9,13 @@ local M = {}
 
 local status = {} ---@type table<integer, sidekick.lsp.Status>
 
+local levels = {
+  Normal = vim.log.levels.INFO,
+  Warning = vim.log.levels.WARN,
+  Error = vim.log.levels.ERROR,
+  Inactive = vim.log.levels.WARN,
+}
+
 ---@param res sidekick.lsp.Status
 ---@type lsp.Handler
 function M.on_status(err, res, ctx)
@@ -16,8 +23,9 @@ function M.on_status(err, res, ctx)
     return
   end
   status[ctx.client_id] = vim.deepcopy(res)
+  local level = levels[res.kind or "Normal"] or vim.log.levels.INFO
 
-  if res.message and (res.kind == "Error" or res.kind == "Warning") then
+  if res.message and level >= Config.copilot.status.level then
     local msg = "**Copilot:** " .. res.message
     if msg:find("not signed") then
       msg = msg .. "\nPlease use `:LspCopilotSignIn` to sign in."

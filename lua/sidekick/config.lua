@@ -136,6 +136,9 @@ local defaults = {
     -- track copilot's status with `didChangeStatus`
     status = {
       enabled = true,
+      level = vim.log.levels.WARN,
+      -- set to vim.log.levels.OFF to disable notifications
+      -- level = vim.log.levels.OFF,
     },
   },
   ui = {
