@@ -86,10 +86,10 @@ function M.format(state, picker)
   if state.session then
     ret[#ret + 1] = { string.rep(" ", 12 - len) }
 
-    if state.session.backend == "terminal" or state.session.mux_session == state.session.sid then
-      ret[#ret + 1] = { Config.ui.icons["terminal_" .. status], status_hl }
-    else
+    if state.external then
       ret[#ret + 1] = { Config.ui.icons["external_" .. status], status_hl }
+    else
+      ret[#ret + 1] = { Config.ui.icons["terminal_" .. status], status_hl }
     end
     len = len + 2
 

@@ -12,6 +12,7 @@ local M = {}
 ---@field started? boolean
 ---@field attached? boolean
 ---@field terminal? sidekick.cli.Terminal
+---@field external? boolean
 
 ---@class sidekick.cli.Filter
 ---@field attached? boolean
@@ -54,6 +55,9 @@ function M.get_state(session)
         return session[k]
       elseif k == "attached" then
         return session:is_attached()
+      elseif k == "external" then
+        local is_terminal = session.backend == "terminal" or session.mux_session == session.sid
+        return not is_terminal
       elseif k == "terminal" then
         return session.backend == "terminal" and Terminal.get(session.id) or nil
       end
@@ -126,6 +130,9 @@ function M.get(filter)
     end
     if (a.terminal ~= nil) ~= (b.terminal ~= nil) then
       return a.terminal ~= nil
+    end
+    if a.external ~= b.external then
+      return not a.external
     end
     return a.tool.name < b.tool.name
   end)
