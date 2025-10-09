@@ -1,3 +1,4 @@
+local Config = require("sidekick.config")
 local Util = require("sidekick.util")
 
 ---@class sidekick.cli.Select: sidekick.cli.With
@@ -64,20 +65,12 @@ function M.format(state, picker)
   local sw = vim.api.nvim_strwidth
   local ret = {} ---@type snacks.picker.Highlight[]
 
-  local status = state.terminal and "terminal"
-    or state.attached and "attached"
+  local status = state.attached and "attached"
     or state.started and "started"
     or state.installed and "installed"
     or "missing"
 
-  ---@type table<string, sidekick.Chunk>
-  local icons = {
-    terminal = { "󰆍 ", "SidekickCliTerminal" },
-    attached = { " ", "SidekickCliAttached" },
-    started = { " ", "SidekickCliStarted" },
-    installed = { " ", "SidekickCliInstalled" },
-    missing = { " ", "SidekickCliMissing" },
-  }
+  local status_hl = "SidekickCli" .. status:gsub("^%l", string.upper)
 
   if picker then
     local count = picker:count()
@@ -86,17 +79,27 @@ function M.format(state, picker)
     ret[#ret + 1] = { idx .. ".", "SnacksPickerIdx" }
     ret[#ret + 1] = { " " }
   end
-  ret[#ret + 1] = icons[status]
+  ret[#ret + 1] = { Config.ui.icons[status], status_hl }
   ret[#ret + 1] = { " " }
   ret[#ret + 1] = { state.tool.name }
   local len = sw(state.tool.name) + 2
   if state.session then
-    local b = state.session.mux_backend or state.session.backend
-    local backend = ("[%s]"):format(b)
-    if state.session.mux_session and state.session.mux_session ~= state.session.sid then
-      backend = ("[%s:%s]"):format(b, state.session.mux_session)
-    end
     ret[#ret + 1] = { string.rep(" ", 12 - len) }
+
+    if state.session.backend == "terminal" or state.session.mux_session == state.session.sid then
+      ret[#ret + 1] = { Config.ui.icons["terminal_" .. status], status_hl }
+    else
+      ret[#ret + 1] = { Config.ui.icons["external_" .. status], status_hl }
+    end
+    len = len + 2
+
+    local backends = {} ---@type string[]
+    backends[#backends + 1] = state.session.mux_backend or state.session.backend
+    if state.session.mux_session ~= state.session.sid then
+      backends[#backends + 1] = state.session.mux_session
+    end
+    local backend = ("[%s]"):format(table.concat(backends, ":"))
+
     ret[#ret + 1] = { backend, "Special" }
     len = 12 + sw(backend)
     ret[#ret + 1] = { string.rep(" ", 40 - len) }

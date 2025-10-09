@@ -137,6 +137,18 @@ local defaults = {
       enabled = true,
     },
   },
+  ui = {
+    icons = {
+      attached = " ",
+      started = " ",
+      installed = " ",
+      missing = " ",
+      external_attached = "󰖩 ",
+      external_started = "󰖪 ",
+      terminal_attached = " ",
+      terminal_started = " ",
+    },
+  },
   debug = false, -- enable debug logging
 }
 
@@ -231,7 +243,6 @@ function M.set_hl()
     Chat = "NormalFloat",
     CliMissing = "DiagnosticError",
     CliAttached = "Special",
-    CliTerminal = "DiagnosticInfo",
     CliStarted = "DiagnosticWarn",
     CliInstalled = "DiagnosticOk",
     CliUnavailable = "DiagnosticError",
