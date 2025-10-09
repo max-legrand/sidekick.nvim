@@ -120,11 +120,7 @@ function M.to_text(data)
     return { data }
   end
 
-  if type(vim.tbl_get(data, 1, 1, 1)) == "string" then
-    ---@cast data sidekick.Text[]
-    return data
-  end
-  error("invalid data type: " .. vim.inspect(data))
+  return data
 end
 
 return M
