@@ -480,7 +480,7 @@ describe("context module", function()
         local rel = vim.fs.basename(tmp)
         assert.is_true(lines[2]:find("- @", 1, true) ~= nil, lines[2])
         assert.is_true(lines[2]:find(rel, 1, true) ~= nil, lines[2])
-        assert.is_true(lines[2]:find(":2", 1, true) ~= nil, lines[2])
+        assert.is_true(lines[2]:find(":L2", 1, true) ~= nil, lines[2])
         assert.is_true(lines[2]:find("[E]", 1, true) ~= nil)
         assert.is_true(lines[2]:find("Test error message", 1, true) ~= nil)
 

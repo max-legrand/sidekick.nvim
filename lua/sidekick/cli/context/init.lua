@@ -104,6 +104,7 @@ function C:get(name)
       return self.context[n]
     end
   end
+  return false
 end
 
 ---@param msg string
