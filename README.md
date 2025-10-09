@@ -291,6 +291,7 @@ local defaults = {
       -- stylua: ignore
       keys = {
         hide_n        = { "q"    , "hide"      , mode = "n"  }, -- hide the terminal window in normal mode
+        hide_ctrl_q   = { "<c-q>", "hide"      , mode = "n"  }, -- hide the terminal window in normal mode
         hide_ctrl_dot = { "<c-.>", "hide"      , mode = "nt" }, -- hide the terminal window in terminal mode
         hide_ctrl_z   = { "<c-z>", "hide"      , mode = "nt" }, -- hide the terminal window in terminal mode
         prompt        = { "<c-p>", "prompt"    , mode = "t"  }, -- insert prompt or context
@@ -363,6 +364,18 @@ local defaults = {
     -- track copilot's status with `didChangeStatus`
     status = {
       enabled = true,
+    },
+  },
+  ui = {
+    icons = {
+      attached          = " ",
+      started           = " ",
+      installed         = " ",
+      missing           = " ",
+      external_attached = "󰖩 ",
+      external_started  = "󰖪 ",
+      terminal_attached = " ",
+      terminal_started  = " ",
     },
   },
   debug = false, -- enable debug logging

@@ -138,15 +138,16 @@ local defaults = {
     },
   },
   ui = {
+    -- stylua: ignore
     icons = {
-      attached = " ",
-      started = " ",
-      installed = " ",
-      missing = " ",
+      attached          = " ",
+      started           = " ",
+      installed         = " ",
+      missing           = " ",
       external_attached = "󰖩 ",
-      external_started = "󰖪 ",
+      external_started  = "󰖪 ",
       terminal_attached = " ",
-      terminal_started = " ",
+      terminal_started  = " ",
     },
   },
   debug = false, -- enable debug logging
