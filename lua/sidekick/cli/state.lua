@@ -88,8 +88,11 @@ function M.get(filter)
       skip = true
     end
     if not skip then
-      sids[s.sid] = true
-      all[#all + 1] = M.get_state(s)
+      local ss = M.get_state(s)
+      all[#all + 1] = ss
+      if not ss.external then
+        sids[s.sid] = true
+      end
     end
   end
 
