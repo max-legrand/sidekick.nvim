@@ -61,6 +61,8 @@ REQUIREMENTS                        *sidekick.nvim-sidekick.nvim-requirements*
 - nvim-treesitter-textobjects <https://github.com/nvim-treesitter/nvim-treesitter-textobjects> **(main branch)** for `{function}` and `{class}` context variables **(optional)**
 - AI cli tools, such as Codex, Claude, Copilot, Gemini, … **(optional)**
     see the |sidekick.nvim-ai-cli-integration| section for details.
+- lsof <https://man7.org/linux/man-pages/man8/lsof.8.html> and ps <https://man7.org/linux/man-pages/man1/ps.1.html> are used
+    on Unix-like systems to detect running AI CLI tool sessions. **(optional, but recommended)**
 
 
 QUICK START                          *sidekick.nvim-sidekick.nvim-quick-start*
@@ -97,7 +99,6 @@ Install with your favorite manager. With lazy.nvim
           },
         },
       },
-      -- stylua: ignore
       keys = {
         {
           "<tab>",
@@ -290,7 +291,6 @@ Default settings ~
           },
           --- CLI Tool Keymaps (default mode is `t`)
           ---@type table<string, sidekick.cli.Keymap|false>
-          -- stylua: ignore
           keys = {
             hide_n        = { "q"    , "hide"      , mode = "n"  }, -- hide the terminal window in normal mode
             hide_ctrl_q   = { "<c-q>", "hide"      , mode = "n"  }, -- hide the terminal window in normal mode
@@ -340,7 +340,6 @@ Default settings ~
         --- Add custom context. See `lua/sidekick/context/init.lua`
         ---@type table<string, sidekick.context.Fn>
         context = {},
-        -- stylua: ignore
         ---@type table<string, sidekick.Prompt|string|fun(ctx:sidekick.context.ctx):(string?)>
         prompts = {
           changes         = "Can you review my changes?",
@@ -369,7 +368,6 @@ Default settings ~
         },
       },
       ui = {
-        -- stylua: ignore
         icons = {
           attached          = " ",
           started           = " ",
