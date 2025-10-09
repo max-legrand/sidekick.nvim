@@ -88,17 +88,22 @@ end
 
 ---@param name string
 function C:get(name)
-  if self.context[name] == nil then
-    local fn = M.fn(name)
-    if not fn then
-      Util.error(("Invalid context `{%s}`"):format(name))
+  local names = vim.split(name, "|", { plain = true })
+  for _, n in ipairs(names) do
+    if self.context[n] == nil then
+      local fn = M.fn(n)
+      if not fn then
+        Util.error(("Invalid context `{%s}`"):format(n))
+      end
+      local ret = fn and fn(self.ctx) or false
+      ret = ret and Text.to_text(ret) or false
+      ret = type(ret) == "table" and not vim.tbl_isempty(ret) and ret or false
+      self.context[n] = ret
     end
-    local ret = fn and fn(self.ctx) or false
-    ret = ret and Text.to_text(ret) or false
-    ret = type(ret) == "table" and not vim.tbl_isempty(ret) and ret or false
-    self.context[name] = ret
+    if self.context[n] then
+      return self.context[n]
+    end
   end
-  return self.context[name]
 end
 
 ---@param msg string

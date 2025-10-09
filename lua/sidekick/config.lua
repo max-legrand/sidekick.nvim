@@ -115,7 +115,7 @@ local defaults = {
       changes         = "Can you review my changes?",
       diagnostics     = "Can you help me fix the diagnostics in {file}?\n{diagnostics}",
       diagnostics_all = "Can you help me fix these diagnostics?\n{diagnostics_all}",
-      document        = "Add documentation to {position}",
+      document        = "Add documentation to {function|line}",
       explain         = "Explain {this}",
       fix             = "Can you fix {this}?",
       optimize        = "How can {this} be optimized?",
@@ -124,6 +124,7 @@ local defaults = {
       -- simple context prompts
       buffers         = "{buffers}",
       file            = "{file}",
+      line            = "{line}",
       position        = "{position}",
       quickfix        = "{quickfix}",
       selection       = "{selection}",
@@ -247,6 +248,11 @@ function M.set_hl()
     CliStarted = "DiagnosticWarn",
     CliInstalled = "DiagnosticOk",
     CliUnavailable = "DiagnosticError",
+    LocDelim = "Delimiter",
+    LocFile = "@markup.link",
+    LocNum = "@attribute",
+    LocRow = "SidekickLocDelim",
+    LocCol = "SidekickLocDelim",
   }
   for from, to in pairs(links) do
     vim.api.nvim_set_hl(0, "Sidekick" .. from, { link = to, default = true })
