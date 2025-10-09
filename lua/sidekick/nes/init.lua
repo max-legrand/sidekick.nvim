@@ -91,6 +91,9 @@ end
 local function is_enabled(buf)
   local enabled = M.enabled and Config.nes.enabled or false
   buf = buf or vim.api.nvim_get_current_buf()
+  if not (vim.api.nvim_buf_is_valid(buf) and vim.api.nvim_buf_is_loaded(buf)) then
+    return false
+  end
   if type(enabled) == "function" then
     return enabled(buf) or false
   end
@@ -99,12 +102,12 @@ end
 
 function M.update()
   local buf = vim.api.nvim_get_current_buf()
+  M.clear()
+
   if not is_enabled(buf) then
-    M.clear()
     return
   end
 
-  M.cancel()
   local client = Config.get_client(buf)
   if not client then
     return
@@ -197,7 +200,7 @@ end
 function M.fix_pos(buf, pos)
   local last_line = vim.api.nvim_buf_line_count(buf) - 1
   if pos[1] > last_line then
-    return { last_line, #vim.api.nvim_buf_get_lines(buf, -2, -1, false)[1] }
+    return { last_line, #(vim.api.nvim_buf_get_lines(buf, -2, -1, false)[1] or "") }
   end
   return pos
 end
