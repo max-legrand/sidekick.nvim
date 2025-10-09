@@ -166,7 +166,7 @@ end
 
 ---@param opts? sidekick.Config
 function M.setup(opts)
-  config = vim.tbl_deep_extend("force", {}, defaults, opts or {})
+  config = vim.tbl_deep_extend("force", {}, vim.deepcopy(defaults), opts or {})
 
   vim.api.nvim_create_user_command("Sidekick", function(args)
     require("sidekick.commands").cmd(args)
@@ -182,6 +182,7 @@ function M.setup(opts)
   vim.schedule(function()
     vim.fn.mkdir(state_dir, "p")
     M.set_hl()
+
     vim.api.nvim_create_autocmd("ColorScheme", {
       group = M.augroup,
       callback = M.set_hl,
@@ -203,7 +204,34 @@ function M.setup(opts)
     if M.copilot.status.enabled then
       require("sidekick.status").setup()
     end
+
+    M.validate("cli.win.layout", { "float", "left", "bottom", "top", "right" })
+    M.validate("cli.mux.backend", { "tmux", "zellij" })
+    M.validate("cli.mux.create", { "terminal", "window", "split" })
   end)
+end
+
+---@param key string
+---@param t "string"|"number"|"boolean"|"table"|"function"|any[]
+function M.validate(key, t)
+  local value = vim.tbl_get(config, unpack(vim.split(key, "%.")))
+  local err ---@type string?
+  if type(t) == "table" then
+    if not vim.tbl_contains(t, value) then
+      err = ("Invalid value for option `opts.%s`\n- found: `%s`\n- expected: `%s`"):format(
+        key,
+        tostring(value),
+        table.concat(vim.tbl_map(tostring, t), " | ")
+      )
+    end
+  elseif type(value) ~= t then
+    err = ("Expected `opts.%s` to be a `%s`, got `%s`"):format(key, t, type(value))
+  end
+  if err then
+    require("sidekick.util").error(err)
+    return false
+  end
+  return true
 end
 
 ---@param client vim.lsp.Client|string
