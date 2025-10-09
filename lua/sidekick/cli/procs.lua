@@ -3,6 +3,11 @@ local Util = require("sidekick.util")
 local M = {}
 
 local have_proc = vim.uv.fs_stat("/proc/self") ~= nil
+local have_ps, have_lsof = false, false
+if vim.fn.has("win32") == 0 then
+  have_ps = vim.fn.executable("ps") == 1
+  have_lsof = vim.fn.executable("lsof") == 1
+end
 
 ---@param pid number
 function M.env(pid)
@@ -22,6 +27,10 @@ function M.env(pid)
         end
       end
     end
+  end
+
+  if not have_ps then
+    return
   end
 
   -- try ps as a fallback (macOS and others)
@@ -71,7 +80,11 @@ function M.cwd(pid)
   if have_proc then
     -- Linux: use /proc filesystem
     local ret = vim.uv.fs_readlink("/proc/" .. pid .. "/cwd")
-    return ret and vim.fs.normalize(ret) or false
+    return ret and vim.fs.normalize(ret) or nil
+  end
+
+  if not have_lsof then
+    return
   end
 
   -- try lsof as a fallback (macOS and others)
@@ -83,7 +96,6 @@ function M.cwd(pid)
       return vim.fs.normalize(path)
     end
   end
-  return false
 end
 
 local proc_fields = { env = M.env, cwd = M.cwd }
@@ -92,7 +104,7 @@ local proc_fields = { env = M.env, cwd = M.cwd }
 ---@field pid number
 ---@field ppid number
 ---@field cmd string
----@field env table<string, string>
+---@field env? table<string, string>
 ---@field cwd? string
 
 ---@class sidekick.cli.Procs
@@ -112,7 +124,7 @@ end
 function P:update()
   self._procs = {}
   self._children = {}
-  if vim.fn.has("win32") == 1 then
+  if not have_ps then
     return
   end
 
@@ -133,7 +145,7 @@ function P:update()
         __index = function(t, k)
           local f = proc_fields[k]
           if f then
-            local v = f(t.pid)
+            local v = f(t.pid) or false
             rawset(t, k, v)
             return v
           end

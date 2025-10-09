@@ -69,8 +69,8 @@ function M:submit()
   })
 end
 
-if vim.fn.has("win32") == 0 then
-  -- only register on non-Windows systems
+-- only register on Unix-like systems with lsof available
+if vim.fn.has("win32") == 0 and vim.fn.executable("lsof") == 1 then
   require("sidekick.cli.session").register("opencode", M)
 end
 

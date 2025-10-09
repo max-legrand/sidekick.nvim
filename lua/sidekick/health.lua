@@ -76,6 +76,17 @@ function M.check()
     end
   end
 
+  if vim.fn.has("win32") == 0 then
+    for _, c in ipairs({ "ps", "lsof" }) do
+      if vim.fn.executable(c) == 1 then
+        ok("`" .. c .. "` is installed")
+      else
+        warn("`" .. c .. "` is not installed, running processes and ports will not be detected")
+      end
+    end
+  end
+
+  start("Sidekick AI CLI Tools")
   local tools = require("sidekick.config").tools()
   local tool_names = vim.tbl_keys(tools) ---@type string[]
   table.sort(tool_names)

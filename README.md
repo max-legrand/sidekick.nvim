@@ -43,6 +43,8 @@ without leaving your editor.
 - [nvim-treesitter-textobjects](https://github.com/nvim-treesitter/nvim-treesitter-textobjects) **_(`main` branch)_** for `{function}` and `{class}` context variables **_(optional)_**
 - AI cli tools, such as Codex, Claude, Copilot, Gemini, … **_(optional)_**
   see the [🤖 AI CLI Integration](#-ai-cli-integration) section for details.
+- [lsof](https://man7.org/linux/man-pages/man8/lsof.8.html) and [ps](https://man7.org/linux/man-pages/man1/ps.1.html) are used
+  on Unix-like systems to detect running AI CLI tool sessions. **_(optional, but recommended)_**
 
 ## 🚀 Quick Start
 
