@@ -41,6 +41,7 @@ function M.sessions()
         tool = "opencode",
         cwd = proc.cwd,
         port = port,
+        mux_session = tostring(proc.pid),
         base_url = ("http://localhost:%d"):format(port),
       }
     end
