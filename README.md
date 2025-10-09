@@ -253,7 +253,7 @@ local defaults = {
     },
     clear = {
       -- events that clear the current next edit suggestion
-      events = { "TextChangedI", "TextChanged", "BufWritePre", "InsertEnter" },
+      events = { "TextChangedI", "InsertEnter" },
       esc = true, -- clear next edit suggestions when pressing <Esc>
     },
     ---@class sidekick.diff.Opts
