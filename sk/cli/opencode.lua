@@ -35,16 +35,19 @@ function M.sessions()
   local ret = {} ---@type sidekick.cli.session.State[]
 
   for pid, port in pairs(ports) do
-    ret[#ret + 1] = {
-      id = "opencode-" .. pid,
-      pid = pid,
-      tool = "opencode",
-      cwd = Procs.cwd(pid) or "",
-      port = port,
-      pids = Procs.pids(pid),
-      mux_session = tostring(pid),
-      base_url = ("http://localhost:%d"):format(port),
-    }
+    local proc = vim.api.nvim_get_proc(pid)
+    if proc and proc.name == "opencode" then
+      ret[#ret + 1] = {
+        id = "opencode-" .. pid,
+        pid = pid,
+        tool = "opencode",
+        cwd = Procs.cwd(pid) or "",
+        port = port,
+        pids = Procs.pids(pid),
+        mux_session = tostring(pid),
+        base_url = ("http://localhost:%d"):format(port),
+      }
+    end
   end
   return ret
 end
