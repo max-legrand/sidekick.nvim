@@ -76,7 +76,6 @@ Install with your favorite manager. With [lazy.nvim](https://github.com/folke/la
       },
     },
   },
-  -- stylua: ignore
   keys = {
     {
       "<tab>",
@@ -288,7 +287,6 @@ local defaults = {
       },
       --- CLI Tool Keymaps (default mode is `t`)
       ---@type table<string, sidekick.cli.Keymap|false>
-      -- stylua: ignore
       keys = {
         hide_n        = { "q"    , "hide"      , mode = "n"  }, -- hide the terminal window in normal mode
         hide_ctrl_q   = { "<c-q>", "hide"      , mode = "n"  }, -- hide the terminal window in normal mode
@@ -338,7 +336,6 @@ local defaults = {
     --- Add custom context. See `lua/sidekick/context/init.lua`
     ---@type table<string, sidekick.context.Fn>
     context = {},
-    -- stylua: ignore
     ---@type table<string, sidekick.Prompt|string|fun(ctx:sidekick.context.ctx):(string?)>
     prompts = {
       changes         = "Can you review my changes?",
@@ -367,7 +364,6 @@ local defaults = {
     },
   },
   ui = {
-    -- stylua: ignore
     icons = {
       attached          = " ",
       started           = " ",

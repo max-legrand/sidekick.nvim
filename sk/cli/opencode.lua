@@ -4,6 +4,8 @@
 ---@field base_url string
 local M = {}
 M.__index = M
+M.priority = 20
+M.external = true
 
 function M.sessions()
   local Procs = require("sidekick.cli.procs")
@@ -32,19 +34,17 @@ function M.sessions()
   -- Find opencode processes and match with ports
   local ret = {} ---@type sidekick.cli.session.State[]
 
-  for _, proc in pairs(Procs:find("opencode")) do
-    local port = ports[proc.pid]
-    if port then
-      ret[#ret + 1] = {
-        id = "opencode-" .. proc.pid,
-        pid = proc.pid,
-        tool = "opencode",
-        cwd = proc.cwd,
-        port = port,
-        mux_session = tostring(proc.pid),
-        base_url = ("http://localhost:%d"):format(port),
-      }
-    end
+  for pid, port in pairs(ports) do
+    ret[#ret + 1] = {
+      id = "opencode-" .. pid,
+      pid = pid,
+      tool = "opencode",
+      cwd = Procs.cwd(pid) or "",
+      port = port,
+      pids = Procs.pids(pid),
+      mux_session = tostring(pid),
+      base_url = ("http://localhost:%d"):format(port),
+    }
   end
   return ret
 end

@@ -6,6 +6,8 @@ local Util = require("sidekick.util")
 ---@field zellij string
 local M = {}
 M.__index = M
+M.priority = 50
+M.external = false
 
 M.tpl = [[
 layout {
@@ -37,12 +39,14 @@ function M:terminal()
     )) --[[@as string]]
   end
 
-  local layout_file = Config.state("zellij-layout-" .. self.id .. ".kdl")
+  local session = self.sid
+
+  local layout_file = Config.state("zellij-layout-" .. session .. ".kdl")
   vim.fn.writefile(vim.split(layout, "\n"), layout_file)
-  Util.set_state(self.id, { tool = self.tool.name, cwd = self.cwd })
+  Util.set_state(session, { tool = self.tool.name, cwd = self.cwd })
 
   return {
-    cmd = { "zellij", "--layout", layout_file, "attach", "--create", self.id },
+    cmd = { "zellij", "--layout", layout_file, "attach", "--create", session },
     env = {
       ZELLIJ = false,
       ZELLIJ_SESSION_NAME = false,
@@ -75,15 +79,30 @@ end
 function M.sessions()
   local sessions = Util.exec({ "zellij", "list-sessions", "-ns" }, { notify = false }) or {}
   local ret = {} ---@type sidekick.cli.session.State[]
+  local Terminal = require("sidekick.cli.terminal")
+
+  -- Find the terminal instance attached to this zellij session.
+  -- We need this to get the PIDs for deduplication, since zellij's
+  -- API doesn't provide process information.
+  local function find_pids(sid)
+    local pids = {} ---@type integer[]
+    for _, t in pairs(Terminal.terminals) do
+      if t.mux_backend == "zellij" and t.mux_session == sid then
+        vim.list_extend(pids, t.pids or {})
+      end
+    end
+    return pids
+  end
 
   for _, s in ipairs(sessions) do
     local state = Util.get_state(s)
     if state then
       ret[#ret + 1] = {
-        id = s,
+        id = "zellij: " .. s,
         cwd = state.cwd,
         tool = state.tool,
         mux_session = s,
+        pids = find_pids(s),
       }
     end
   end

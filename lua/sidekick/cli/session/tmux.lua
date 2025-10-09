@@ -8,7 +8,7 @@ local M = {}
 M.__index = M
 
 local PANE_FORMAT =
-  "#{pane_id}:#{pane_pid}:#{session_name}:#{?pane_current_path,#{pane_current_path},#{pane_start_path}}"
+  "#{session_id}:#{pane_id}:#{pane_pid}:#{session_name}:#{?pane_current_path,#{pane_current_path},#{pane_start_path}}"
 
 ---@return sidekick.cli.terminal.Cmd?
 function M:attach()
@@ -17,9 +17,18 @@ function M:attach()
   end
 end
 
+function M:init()
+  if self.started then
+    self.external = self.sid ~= self.mux_session
+  else
+    self.external = vim.env.TMUX and Config.cli.mux.create ~= "terminal"
+  end
+  self.priority = self.external and 10 or 50
+end
+
 ---@return sidekick.cli.terminal.Cmd?
 function M:start()
-  if Config.cli.mux.create == "terminal" or vim.env.TMUX == nil then
+  if not self.external then
     local cmd = { "tmux", "new", "-A", "-s", self.id }
     vim.list_extend(cmd, { "-c", self.cwd })
     self:add_cmd(cmd)
@@ -80,7 +89,7 @@ function M.panes(opts)
   local lines = Util.exec(cmd, { notify = opts.notify == true })
   local panes = {} ---@type sidekick.tmux.Pane[]
   for _, line in ipairs(lines or {}) do
-    local id, pid, session_name, cwd = line:match("^(%%%d+):(%d+):(.-):(.*)$")
+    local session_id, id, pid, session_name, cwd = line:match("^(%$%d+):(%%%d+):(%d+):(.-):(.*)$")
     if id and pid and session_name and cwd then
       pid = assert(tonumber(pid), "invalid tmux pane_pid: " .. pid) --[[@as number]]
       ---@class sidekick.tmux.Pane
@@ -89,6 +98,7 @@ function M.panes(opts)
         pid = pid, -- process id of the pane
         id = id, -- tmux pane id
         session_name = session_name,
+        session_id = session_id,
         cwd = cwd,
       }
     end
@@ -96,16 +106,35 @@ function M.panes(opts)
   return panes
 end
 
+function M.clients()
+  local lines = Util.exec({ "tmux", "list-clients", "-F", "#{session_id}:#{client_pid}" }, { notify = false })
+  local ret = {} ---@type table<string, integer>[]
+  for _, line in ipairs(lines or {}) do
+    local session_id, pid = line:match("^(%$%d+):(%d+)$")
+    if session_id and pid then
+      pid = assert(tonumber(pid), "invalid tmux client_pid: " .. pid) --[[@as number]]
+      ret[session_id] = ret[session_id] or {}
+      table.insert(ret[session_id], pid)
+    end
+  end
+  return ret
+end
+
 function M.sessions()
   local panes = M.panes()
   local ret = {} ---@type sidekick.cli.session.State[]
   local tools = Config.tools()
 
-  local procs = require("sidekick.cli.procs")
+  local clients = M.clients()
+
+  local Procs = require("sidekick.cli.procs")
+  local procs = Procs.new()
   for _, pane in ipairs(panes) do
     procs:walk(pane.pid, function(proc)
       for _, tool in pairs(tools) do
         if tool:is_proc(proc) then
+          local pids = Procs.pids(pane.pid)
+          vim.list_extend(pids, clients[pane.session_id] or {})
           ret[#ret + 1] = {
             id = pane.skid,
             cwd = proc.cwd or pane.cwd,
@@ -113,6 +142,7 @@ function M.sessions()
             tmux_pane_id = pane.id,
             tmux_pid = pane.pid,
             mux_session = pane.session_name,
+            pids = pids,
           }
           return true
         end

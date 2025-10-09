@@ -1,9 +1,11 @@
 local Util = require("sidekick.util")
 
+local M = {}
+
 local have_proc = vim.uv.fs_stat("/proc/self") ~= nil
 
 ---@param pid number
-local function get_env(pid)
+function M.env(pid)
   local env = {} ---@type table<string, string>
 
   if have_proc then
@@ -39,7 +41,33 @@ local function get_env(pid)
 end
 
 ---@param pid number
-local function get_cwd(pid)
+---@return integer?
+function M.parent(pid)
+  local ret = vim.api.nvim_get_proc(pid)
+  return ret and ret.ppid or nil
+end
+
+---@param pid number
+---@return integer[]
+function M.children(pid)
+  return vim.api.nvim_get_proc_children(pid) or {}
+end
+
+--- Get all descendant pids of the given pid, including itself
+---@param pid number
+function M.pids(pid)
+  local ret = {} ---@type integer[]
+  local todo = { pid }
+  while #todo > 0 do
+    local current = table.remove(todo, 1)
+    ret[#ret + 1] = current
+    vim.list_extend(todo, M.children(current))
+  end
+  return ret
+end
+
+---@param pid number
+function M.cwd(pid)
   if have_proc then
     -- Linux: use /proc filesystem
     local ret = vim.uv.fs_readlink("/proc/" .. pid .. "/cwd")
@@ -58,7 +86,7 @@ local function get_cwd(pid)
   return false
 end
 
-local proc_fields = { env = get_env, cwd = get_cwd }
+local proc_fields = { env = M.env, cwd = M.cwd }
 
 ---@class sidekick.cli.Proc
 ---@field pid number
@@ -70,18 +98,18 @@ local proc_fields = { env = get_env, cwd = get_cwd }
 ---@class sidekick.cli.Procs
 ---@field _procs table<number,sidekick.cli.Proc>
 ---@field _children table<number, number[]>
-local M = {}
-M.__index = M
+local P = {}
+P.__index = P
 
-function M.new()
-  local self = setmetatable({}, M)
+function P.new()
+  local self = setmetatable({}, P)
   self._procs = {}
   self._children = {}
   self:update()
   return self
 end
 
-function M:update()
+function P:update()
   self._procs = {}
   self._children = {}
   if vim.fn.has("win32") == 1 then
@@ -119,22 +147,22 @@ end
 
 ---@param pid number
 ---@return sidekick.cli.Proc?
-function M:get(pid)
+function P:get(pid)
   return self._procs[pid]
 end
 
 ---@param pid number
-function M:parent(pid)
+function P:parent(pid)
   local proc = self:get(pid)
   return proc and self:get(proc.ppid) or nil
 end
 
-function M:list()
+function P:list()
   return vim.tbl_values(self._procs)
 end
 
 ---@param pid number
-function M:children(pid)
+function P:children(pid)
   local children = self._children[pid] or {}
   local ret = {} ---@type sidekick.cli.Proc[]
   for _, cpid in ipairs(children) do
@@ -145,7 +173,7 @@ end
 
 ---@param pid number
 ---@param cb? fun(proc: sidekick.cli.Proc):(true|nil)
-function M:walk(pid, cb)
+function P:walk(pid, cb)
   local todo = { pid }
   local ret = {} ---@type sidekick.cli.Proc[]
   while #todo > 0 do
@@ -163,7 +191,7 @@ function M:walk(pid, cb)
 end
 
 ---@param filter string|fun(proc: sidekick.cli.Proc):boolean
-function M:find(filter)
+function P:find(filter)
   if type(filter) == "string" then
     local pattern = filter --[[@as string]]
     ---@param proc sidekick.cli.Proc
@@ -174,4 +202,6 @@ function M:find(filter)
   return vim.tbl_filter(filter, self._procs)
 end
 
-return M.new()
+M.new = P.new
+
+return M

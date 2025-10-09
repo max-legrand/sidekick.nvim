@@ -20,6 +20,8 @@ local Util = require("sidekick.util")
 ---@field win? integer
 local M = {}
 M.__index = M
+M.priority = 100
+M.external = false
 
 local INITIAL_SEND_DELAY = 500 -- ms
 local SEND_DELAY = 100 --ms
@@ -250,6 +252,7 @@ function M:start()
     self:close()
     return
   end
+  self.pids = { vim.fn.jobpid(self.job) }
   self.started = true
   self.attached = true
 

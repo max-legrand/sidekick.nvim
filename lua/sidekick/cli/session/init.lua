@@ -11,8 +11,10 @@ M._attached = {} ---@type table<string,sidekick.cli.Session>
 ---@field id string unique id of the running tool (typically pid of tool)
 ---@field cwd string
 ---@field tool sidekick.cli.Tool|string
+---@field pids? integer[] list of pids associated with this session
 ---@field backend? string
 ---@field started? boolean
+---@field external? boolean external sessions won't be opened in a terminal
 ---@field mux_session? string
 ---@field mux_backend? string
 
@@ -24,6 +26,7 @@ M._attached = {} ---@type table<string,sidekick.cli.Session>
 ---@field backend string
 local B = {}
 B.__index = B
+B.priority = 0
 
 --- Send text to the session
 ---@param text string
@@ -127,7 +130,6 @@ end
 
 function M.sessions()
   M.setup()
-  require("sidekick.cli.procs"):update()
   local ret = {} ---@type sidekick.cli.Session[]
   local ids = {} ---@type table<string,boolean>
   for name, backend in pairs(M.backends) do
@@ -176,7 +178,7 @@ function M.attach(session)
     session = M.new({
       tool = session.tool:clone({ cmd = cmd.cmd, env = cmd.env }),
       cwd = session.cwd,
-      id = session.sid,
+      id = "terminal: " .. session.sid,
       backend = "terminal",
       mux_backend = session.backend,
       mux_session = session.mux_session,

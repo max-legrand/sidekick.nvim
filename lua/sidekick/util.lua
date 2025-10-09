@@ -248,4 +248,19 @@ function M.merge(...)
   return #todo == 0 and {} or #todo == 1 and todo[1] or vim.tbl_deep_extend("force", unpack(todo))
 end
 
+---@param a any[]
+---@param b any[]
+function M.overlaps(a, b)
+  local set = {} ---@type table<any, boolean>
+  for _, v in ipairs(a) do
+    set[v] = true
+  end
+  for _, v in ipairs(b) do
+    if set[v] then
+      return true
+    end
+  end
+  return false
+end
+
 return M

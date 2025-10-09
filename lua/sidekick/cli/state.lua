@@ -7,16 +7,17 @@ local M = {}
 
 ---@class sidekick.cli.State
 ---@field tool sidekick.cli.Tool
----@field session? sidekick.cli.Session
----@field installed? boolean
----@field started? boolean
 ---@field attached? boolean
----@field terminal? sidekick.cli.Terminal
 ---@field external? boolean
+---@field installed? boolean
+---@field session? sidekick.cli.Session
+---@field started? boolean
+---@field terminal? sidekick.cli.Terminal
 
 ---@class sidekick.cli.Filter
 ---@field attached? boolean
 ---@field cwd? boolean
+---@field external? boolean
 ---@field installed? boolean
 ---@field name? string
 ---@field session? string
@@ -36,6 +37,7 @@ function M.is(t, filter)
   filter = filter or {}
   return (filter.attached == nil or filter.attached == t.attached)
     and (filter.cwd == nil or (t.session and t.session.cwd == Session.cwd()))
+    and (filter.external == nil or filter.external == t.external)
     and (filter.installed == nil or filter.installed == t.installed)
     and (filter.name == nil or filter.name == t.tool.name)
     and (filter.session == nil or (t.session and t.session.id == filter.session))
@@ -51,13 +53,10 @@ function M.get_state(session)
     installed = true, -- it's running, so it must be installed
   }, {
     __index = function(_, k)
-      if k == "tool" or k == "started" then
+      if k == "tool" or k == "started" or k == "external" then
         return session[k]
       elseif k == "attached" then
         return session:is_attached()
-      elseif k == "external" then
-        local is_terminal = session.backend == "terminal" or session.mux_session == session.sid
-        return not is_terminal
       elseif k == "terminal" then
         return session.backend == "terminal" and Terminal.get(session.id) or nil
       end
@@ -72,21 +71,20 @@ function M.get(filter)
   local all = {} ---@type sidekick.cli.State[]
   local sids = {} ---@type table<string, boolean>
   local sessions = filter.attached and Session.attached() or Session.sessions()
-  local terminals = {} ---@type table<string, boolean>
 
   for _, s in pairs(sessions) do
-    if s.backend == "terminal" then
-      terminals[s.id] = true
-    end
-  end
-
-  for _, s in pairs(sessions) do
+    -- if not attached, skip if another session with higher priority
+    -- is running with overlapping pids
     local skip = false
-    if s.backend ~= "terminal" and s.mux_session == s.sid and terminals[s.sid] then
-      -- ignore non-terminal sessions that have a terminal session with the same mux_session
-      -- this avoids showing both a tmux/zellij session and the terminal session attached to it
-      skip = true
+    if not s:is_attached() then
+      for _, s2 in pairs(sessions) do
+        if s2 ~= s and Util.overlaps(s2.pids or {}, s.pids or {}) and s2.priority > s.priority then
+          skip = true
+          break
+        end
+      end
     end
+
     if not skip then
       local ss = M.get_state(s)
       all[#all + 1] = ss
@@ -127,9 +125,6 @@ function M.get(filter)
     end
     if a.started ~= b.started then
       return a.started
-    end
-    if a.attached ~= b.attached then
-      return a.attached
     end
     if (a.terminal ~= nil) ~= (b.terminal ~= nil) then
       return a.terminal ~= nil

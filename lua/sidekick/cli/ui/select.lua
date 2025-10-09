@@ -93,9 +93,12 @@ function M.format(state, picker)
     end
     len = len + 2
 
+    -- Keep this for debugging purposes
+    -- ret[#ret + 1] = { table.concat(state.session.pids or {}, ",") }
+
     local backends = {} ---@type string[]
     backends[#backends + 1] = state.session.mux_backend or state.session.backend
-    if state.session.mux_session ~= state.session.sid then
+    if state.external then
       backends[#backends + 1] = state.session.mux_session
     end
     local backend = ("[%s]"):format(table.concat(backends, ":"))
