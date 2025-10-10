@@ -415,6 +415,9 @@ function M:keys(buf)
       if type(rhs) == "string" then
         action = Actions[rhs] -- global actions
           or M[rhs] -- terminal methods
+            and function()
+              M[rhs](self)
+            end
           or (vim.fn.exists(":" .. rhs) > 0 and function()
             vim.cmd[rhs]()
           end)
@@ -435,11 +438,15 @@ function M:keys(buf)
         km_opts.buffer = buf
         km_opts.desc = km_opts.desc or ("Sidekick: %s"):format(name:gsub("^%l", string.upper))
         vim.keymap.set(mode, lhs, function()
-          action(self)
+          return action(self)
         end, km_opts)
       end
     end
   end
+end
+
+function M:is_float()
+  return self.opts.layout == "float"
 end
 
 function M:scrollback()

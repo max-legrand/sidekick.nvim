@@ -57,10 +57,22 @@ local defaults = {
         width = 80,
         height = 20,
       },
+      ---@type fun(dir:"h"|"j"|"k"|"l")?
+      --- Function that handles navigation between windows.
+      --- Defaults to `vim.cmd.wincmd`.
+      nav = nil,
       --- CLI Tool Keymaps (default mode is `t`)
       ---@type table<string, sidekick.cli.Keymap|false>
       -- stylua: ignore
       keys = {
+        -- Navigate windows in terminal mode. Only active when:
+        -- * layout is not "float"
+        -- * there is another window in the direction
+        -- With the default layout of "right", only `<c-h>` will be mapped
+        nav_left      = { "<c-h>", "nav_left"  , expr = true }, -- navigate to the left window
+        nav_down      = { "<c-j>", "nav_down"  , expr = true }, -- navigate to the below window
+        nav_up        = { "<c-k>", "nav_up"    , expr = true }, -- navigate to the above window
+        nav_right     = { "<c-l>", "nav_right" , expr = true }, -- navigate to the right window
         hide_n        = { "q"    , "hide"      , mode = "n"  }, -- hide the terminal window in normal mode
         hide_ctrl_q   = { "<c-q>", "hide"      , mode = "n"  }, -- hide the terminal window in normal mode
         hide_ctrl_dot = { "<c-.>", "hide"      , mode = "nt" }, -- hide the terminal window in terminal mode

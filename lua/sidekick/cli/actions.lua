@@ -1,4 +1,6 @@
----@alias sidekick.cli.Action fun(terminal: sidekick.cli.Terminal)
+local Config = require("sidekick.config")
+
+---@alias sidekick.cli.Action fun(terminal: sidekick.cli.Terminal):string?
 ---@type table<string, sidekick.cli.Action>
 local M = {}
 
@@ -17,5 +19,24 @@ function M.prompt(t)
     end)
   end)
 end
+
+---@param dir "h"|"j"|"k"|"l"
+local function nav(dir)
+  ---@type sidekick.cli.Action
+  return function(terminal)
+    local at_edge = vim.fn.winnr() == vim.fn.winnr(dir)
+    if at_edge or terminal:is_float() then
+      return ("<c-%s>"):format(dir)
+    end
+    vim.schedule(function()
+      (Config.cli.win.nav or vim.cmd.wincmd)(dir)
+    end)
+  end
+end
+
+M.nav_left = nav("h")
+M.nav_down = nav("j")
+M.nav_up = nav("k")
+M.nav_right = nav("l")
 
 return M
