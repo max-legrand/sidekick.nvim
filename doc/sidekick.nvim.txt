@@ -393,15 +393,42 @@ NEXT EDIT SUGGESTIONS (NES)*sidekick.nvim-sidekick.nvim-next-edit-suggestions-(n
 Copilot NES requests run automatically when you leave insert mode, modify text
 in normal mode, or after applying an edit.
 
-Use the helper functions to control suggestions manually:
+CmdLua:Sidekick nes apply Apply active text edits>lua
+    ---@return boolean applied
+    require("sidekick.nes").apply()
+<
 
-- `require("sidekick.nes").update()` – request fresh edits for the current buffer.
-- `require("sidekick.nes").jump()` – move the cursor to the first suggested hunk.
-- `require("sidekick.nes").apply()` – apply all pending edits and emit the
-    `User SidekickNesDone` autocmd.
-- `require("sidekick").clear()` – cancel requests and hide overlays.
-- `require("sidekick.nes").have()` – check if any edits are active in the buffer.
-    after an edit has been applied.
+:Sidekick nes clear Clear all active edits>lua
+    require("sidekick.nes").clear()
+<
+
+:Sidekick nes disable>lua
+    
+    require("sidekick.nes").disable()
+<
+
+:Sidekick nes enable>lua
+    ---@param enable? boolean
+    require("sidekick.nes").enable(enable)
+<
+
+Check if any edits are active in the current buffer>lua
+    require("sidekick.nes").have()
+<
+
+:Sidekick nes jump Jump to the start of the active edit>lua
+    ---@return boolean jumped
+    require("sidekick.nes").jump()
+<
+
+:Sidekick nes toggle>lua
+    
+    require("sidekick.nes").toggle()
+<
+
+:Sidekick nes update Request new edits from the LSP server (if any)>lua
+    require("sidekick.nes").update()
+<
 
 
 AI CLI INTEGRATION            *sidekick.nvim-sidekick.nvim-ai-cli-integration*
@@ -411,39 +438,58 @@ CLI tools without leaving Neovim. Each tool runs in its own scratch terminal
 window and shares helper prompts that bundle buffer context, the current cursor
 position, and diagnostics when requested.
 
-- `require("sidekick.cli").toggle()` – open or focus the most recent tool, or pick one if none are running.
-- `require("sidekick.cli").select()` – select a tool to open from a list of all configured tools.
-- `require("sidekick.cli").send({ prompt = "review", submit = true })` – format a prompt,
-    push it to the active tool, and send it immediately.
-- `require("sidekick.cli").send({ msg = "What does this do?", submit = true })` – same as above,
-    but with a custom message.
-- `require("sidekick.cli").prompt()` – browse the prompt presets (Snacks picker is
-    used when available).
-
-Keymaps that pair well with the defaults: ~
-
->lua
-    {
-      {
-        "<leader>aa",
-        function()
-          require("sidekick.cli").toggle({ focus = true })
-        end,
-        desc = "Sidekick Toggle CLI",
-      },
-      {
-        "<leader>ap",
-        function()
-          require("sidekick.cli").prompt()
-        end,
-        desc = "Sidekick Prompt Picker",
-      },
-    }
+CmdLua:Sidekick cli close>lua
+    ---@param opts? sidekick.cli.Hide
+    ---@overload fun(name: string)
+    require("sidekick.cli").close(opts)
 <
 
-Tune the behaviour via `Config.cli`: add your own tool definitions, tweak
-window layout, or extend the prompt list. See the defaults above for all
-available fields.
+:Sidekick cli focus Toggle focus of the terminal window if it is already open>lua
+    ---@param opts? sidekick.cli.Show
+    ---@overload fun(name: string)
+    require("sidekick.cli").focus(opts)
+<
+
+:Sidekick cli hide>lua
+    ---@param opts? sidekick.cli.Hide
+    ---@overload fun(name: string)
+    require("sidekick.cli").hide(opts)
+<
+
+:Sidekick cli prompt Select a prompt to send>lua
+    ---@param opts? sidekick.cli.Prompt|{cb:nil}
+    ---@overload fun(cb:fun(msg?:string))
+    require("sidekick.cli").prompt(opts)
+<
+
+Render a message template or prompt>lua
+    ---@param opts? sidekick.cli.Message|string
+    require("sidekick.cli").render(opts)
+<
+
+:Sidekick cli select Start or attach to a CLI tool>lua
+    ---@param opts? sidekick.cli.Select|{cb:nil}|{focus?:boolean}
+    ---@overload fun(cb:fun(state?:sidekick.cli.State))
+    require("sidekick.cli").select(opts)
+<
+
+:Sidekick cli send Send a message or prompt to a CLI>lua
+    ---@param opts? sidekick.cli.Send
+    ---@overload fun(msg:string)
+    require("sidekick.cli").send(opts)
+<
+
+:Sidekick cli show>lua
+    ---@param opts? sidekick.cli.Show
+    ---@overload fun(name: string)
+    require("sidekick.cli").show(opts)
+<
+
+:Sidekick cli toggle>lua
+    ---@param opts? sidekick.cli.Show
+    ---@overload fun(name: string)
+    require("sidekick.cli").toggle(opts)
+<
 
 
 PROMPTS & CONTEXT ~
