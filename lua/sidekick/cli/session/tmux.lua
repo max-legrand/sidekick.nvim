@@ -22,6 +22,7 @@ function M:init()
     self.external = self.sid ~= self.mux_session
   else
     self.external = vim.env.TMUX and Config.cli.mux.create ~= "terminal"
+    self.mux_session = self.sid
   end
   self.priority = self.external and 10 or 50
 end
@@ -153,6 +154,16 @@ function M.sessions()
   return ret
 end
 
+function M:pane_id()
+  if self.tmux_pane_id then
+    return self.tmux_pane_id
+  end
+  if not self.external then
+    self:spawn({ "tmux", "list-panes", "-s", "-F", PANE_FORMAT, "-t", self.mux_session })
+  end
+  return self.tmux_pane_id
+end
+
 ---Send text to a tmux pane
 function M:send(text)
   local buffer = "sidekick-" .. self.tmux_pane_id
@@ -163,6 +174,15 @@ end
 ---Send text to a tmux pane
 function M:submit()
   Util.exec({ "tmux", "send-keys", "-t", self.tmux_pane_id, "Enter" })
+end
+
+function M:dump()
+  local pane_id = self:pane_id()
+  if not pane_id then
+    return
+  end
+  local _, ret = Util.exec({ "tmux", "capture-pane", "-p", "-t", pane_id, "-S", "-", "-E", "-", "-e" })
+  return ret
 end
 
 return M

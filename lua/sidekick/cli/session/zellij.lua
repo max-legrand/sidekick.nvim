@@ -110,4 +110,28 @@ function M.sessions()
   return ret
 end
 
+function M:dump()
+  do
+    -- sigh, another broken zellij feature
+    -- dump-screen doesn't include ansi escape sequences
+    -- just the raw text
+    return
+  end
+  local tmp = Config.state("zellij-dump.txt")
+  local ok = Util.exec({ "zellij", "-s", self.mux_session, "action", "dump-screen", "-f", tmp }, {
+    notify = true,
+  })
+  if not ok then
+    return
+  end
+  local f = io.open(tmp, "r")
+  if not f then
+    return
+  end
+  vim.fn.delete(tmp)
+  local content = f:read("*a")
+  f:close()
+  return content
+end
+
 return M

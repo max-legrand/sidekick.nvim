@@ -37,8 +37,15 @@ end
 ---@return T
 function M.debounce(fn, ms)
   local timer = assert(vim.uv.new_timer())
-  return function()
-    timer:start(ms or 20, 0, vim.schedule_wrap(fn))
+  return function(...)
+    local args = { ... }
+    timer:start(
+      ms or 20,
+      0,
+      vim.schedule_wrap(function()
+        pcall(fn, unpack(args))
+      end)
+    )
   end
 end
 
@@ -147,11 +154,11 @@ function M.exec(cmd, opts)
   local result = vim.system(cmd, opts):wait()
   if result.code ~= 0 or not result.stdout then
     if opts.notify ~= false then
-      M.error(("Command failed: `%s`\n%s"):format(table.concat(cmd, " "), result.stderr or ""))
+      M.error(("Command failed: `%s`\n%s"):format(table.concat(vim.tbl_map(tostring, cmd), " "), result.stderr or ""))
     end
     return nil
   end
-  return vim.split(result.stdout, "\n", { plain = true, trimempty = true })
+  return vim.split(result.stdout, "\n", { plain = true, trimempty = true }), result.stdout
 end
 
 ---@class sidekick.util.Curl

@@ -39,7 +39,7 @@ end
 
 ---@type vim.wo
 local wo = {
-  winhighlight = "Normal:SidekickChat,NormalNC:SidekickChat",
+  winhighlight = "Normal:SidekickChat,NormalNC:SidekickChat,EndOfBuffer:SidekickChat,SignColumn:SidekickChat",
   colorcolumn = "",
   cursorcolumn = false,
   cursorline = false,
@@ -50,9 +50,9 @@ local wo = {
   relativenumber = false,
   sidescrolloff = 0,
   signcolumn = "no",
+  statuscolumn = " ",
   spell = false,
   winbar = "",
-  statuscolumn = " ",
   wrap = false,
 }
 
@@ -126,56 +126,31 @@ function M:win_valid()
   return self.win and vim.api.nvim_win_is_valid(self.win)
 end
 
+---@param buf? integer
+function M:bo(buf)
+  for k, v in pairs(merge(vim.deepcopy(bo), self.opts.bo)) do
+    ---@diagnostic disable-next-line: no-unknown
+    vim.bo[buf or self.buf][k] = v
+  end
+end
+
+function M:wo()
+  for k, v in pairs(merge(vim.deepcopy(wo), self.opts.wo)) do
+    ---@diagnostic disable-next-line: no-unknown
+    vim.wo[self.win][k] = v
+  end
+end
+
 function M:start()
   if self:is_running() then
     return
   end
 
   self.buf = vim.api.nvim_create_buf(false, true)
-  for k, v in pairs(merge(vim.deepcopy(bo), self.opts.bo)) do
-    ---@diagnostic disable-next-line: no-unknown
-    vim.bo[self.buf][k] = v
-  end
+  self:bo()
   vim.b[self.buf].sidekick_cli = self.tool
 
-  local Actions = require("sidekick.cli.actions")
-
-  ---@type table<string, sidekick.cli.Keymap|false>
-  local keys = vim.tbl_extend("force", {}, self.opts.keys, self.tool.keys or {})
-  for name, km in pairs(keys) do
-    if type(km) == "table" then
-      local lhs, rhs = km[1], km[2] or name
-      ---@type sidekick.cli.Action?
-      local action = type(rhs) == "function" and rhs or nil
-      if type(rhs) == "string" then
-        action = Actions[rhs] -- global actions
-          or M[rhs] -- terminal methods
-          or (vim.fn.exists(":" .. rhs) > 0 and function()
-            vim.cmd[rhs]()
-          end)
-      end
-
-      if not lhs then
-        Util.error(("No lhs for keymap `%s`"):format(name))
-      elseif not action then
-        Util.error(("No action for keymap `%s`: %s"):format(name, tostring(rhs)))
-      else
-        local mode = km.mode or "t"
-        mode = type(mode) == "table" and table.concat(mode, "") or mode --[[@as string]]
-        mode = vim.split(mode, "", { plain = true })
-        local km_opts = vim.deepcopy(km) ---@type vim.keymap.set.Opts
-        ---@diagnostic disable-next-line: inject-field, no-unknown
-        km_opts.mode, km_opts[1], km_opts[2] = nil, nil, nil
-        km_opts.silent = km_opts.silent ~= false
-        km_opts.buffer = self.buf
-        km_opts.desc = km_opts.desc or ("Sidekick: %s"):format(name:gsub("^%l", string.upper))
-        vim.keymap.set(mode, lhs, function()
-          action(self)
-        end, km_opts)
-      end
-    end
-  end
-
+  self:keys()
   self:open_win()
 
   vim.api.nvim_create_autocmd("BufEnter", {
@@ -188,6 +163,31 @@ function M:start()
           vim.cmd.startinsert()
         end
       end)
+    end,
+  })
+
+  vim.api.nvim_create_autocmd("TermLeave", {
+    group = self.group,
+    buffer = self.buf,
+    callback = function(ev)
+      if ev.buf ~= self.buf then
+        return
+      end
+      vim.schedule(function()
+        self:scrollback()
+      end)
+    end,
+  })
+
+  -- Neovim sets defaults, so we need to reset them
+  -- See |terminal-config
+  vim.api.nvim_create_autocmd("TermOpen", {
+    group = self.group,
+    callback = function(ev)
+      if vim.api.nvim_get_current_win() ~= self.win then
+        return
+      end
+      self:wo()
     end,
   })
 
@@ -304,11 +304,8 @@ function M:open_win()
   else
     vim.wo[self.win].winfixwidth = true
   end
-
-  for k, v in pairs(merge(vim.deepcopy(wo), self.opts.wo)) do
-    ---@diagnostic disable-next-line: no-unknown
-    vim.wo[self.win][k] = v
-  end
+  vim.w[self.win].sidekick_cli = self.tool
+  self:wo()
 end
 
 function M:focus()
@@ -402,6 +399,88 @@ function M:submit()
     return
   end
   self:send("\r") -- Updated to use the send method
+end
+
+---@param buf? integer
+function M:keys(buf)
+  buf = buf or self.buf
+  local Actions = require("sidekick.cli.actions")
+  ---@type table<string, sidekick.cli.Keymap|false>
+  local keys = vim.tbl_extend("force", {}, self.opts.keys, self.tool.keys or {})
+  for name, km in pairs(keys) do
+    if type(km) == "table" then
+      local lhs, rhs = km[1], km[2] or name
+      ---@type sidekick.cli.Action?
+      local action = type(rhs) == "function" and rhs or nil
+      if type(rhs) == "string" then
+        action = Actions[rhs] -- global actions
+          or M[rhs] -- terminal methods
+          or (vim.fn.exists(":" .. rhs) > 0 and function()
+            vim.cmd[rhs]()
+          end)
+      end
+
+      if not lhs then
+        Util.error(("No lhs for keymap `%s`"):format(name))
+      elseif not action then
+        Util.error(("No action for keymap `%s`: %s"):format(name, tostring(rhs)))
+      else
+        local mode = km.mode or "t"
+        mode = type(mode) == "table" and table.concat(mode, "") or mode --[[@as string]]
+        mode = vim.split(mode, "", { plain = true })
+        local km_opts = vim.deepcopy(km) ---@type vim.keymap.set.Opts
+        ---@diagnostic disable-next-line: inject-field, no-unknown
+        km_opts.mode, km_opts[1], km_opts[2] = nil, nil, nil
+        km_opts.silent = km_opts.silent ~= false
+        km_opts.buffer = buf
+        km_opts.desc = km_opts.desc or ("Sidekick: %s"):format(name:gsub("^%l", string.upper))
+        vim.keymap.set(mode, lhs, function()
+          action(self)
+        end, km_opts)
+      end
+    end
+  end
+end
+
+function M:scrollback()
+  ---@param buf integer
+  local function scroll(buf)
+    -- scroll to beginning of last non-whitespace line
+    local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+    for l = #lines, 1, -1 do
+      if lines[l]:find("%S") then
+        return vim.api.nvim_win_set_cursor(self.win, { math.max(l + 1, 1), 0 })
+      end
+    end
+  end
+
+  local text = self.parent and self.parent:dump() or nil
+  if not text then
+    return scroll(self.buf)
+  end
+
+  -- proper scrollback support
+  text = text:gsub("\n$", "")
+  local buf = vim.api.nvim_create_buf(false, true)
+  self:bo(buf)
+  vim.api.nvim_win_set_buf(self.win, buf)
+  local term = vim.api.nvim_open_term(buf, {})
+  vim.api.nvim_create_autocmd({ "TermEnter" }, {
+    buffer = buf,
+    callback = function()
+      vim.api.nvim_win_set_buf(self.win, self.buf)
+      self:wo()
+      vim.api.nvim_buf_delete(buf, { force = true })
+    end,
+  })
+  vim.api.nvim_create_autocmd({ "TextChangedT", "TextChanged" }, {
+    buffer = buf,
+    callback = function()
+      scroll(buf)
+    end,
+  })
+  vim.api.nvim_chan_send(term, text)
+  self:keys(buf)
 end
 
 return M

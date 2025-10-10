@@ -15,6 +15,7 @@ M._attached = {} ---@type table<string,sidekick.cli.Session>
 ---@field backend? string
 ---@field started? boolean
 ---@field external? boolean external sessions won't be opened in a terminal
+---@field parent? sidekick.cli.Session
 ---@field mux_session? string
 ---@field mux_backend? string
 
@@ -56,6 +57,10 @@ function B:detach() end
 function B:start()
   error("Backend:start() not implemented")
 end
+
+--- Dumps the cli output (if supported by the backend)
+---@return string?
+function B:dump() end
 
 --- Check if the session is still running
 --- @return boolean
@@ -182,6 +187,7 @@ function M.attach(session)
       backend = "terminal",
       mux_backend = session.backend,
       mux_session = session.mux_session,
+      parent = session,
     })
     session:start()
   end
