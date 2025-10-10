@@ -41,6 +41,11 @@ local base = {
       desc = "Select CLI",
     },
     {
+      "<leader>ad",
+      function() require("sidekick.cli").close() end,
+      desc = "Detach a CLI Session",
+    },
+    {
       "<leader>at",
       function() require("sidekick.cli").send({ msg = "{this}" }) end,
       mode = { "x", "n" },
