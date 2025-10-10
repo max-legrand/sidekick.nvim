@@ -421,6 +421,7 @@ function M:keys(buf)
           or (vim.fn.exists(":" .. rhs) > 0 and function()
             vim.cmd[rhs]()
           end)
+          or rhs
       end
 
       if not lhs then
@@ -437,7 +438,7 @@ function M:keys(buf)
         km_opts.silent = km_opts.silent ~= false
         km_opts.buffer = buf
         km_opts.desc = km_opts.desc or ("Sidekick: %s"):format(name:gsub("^%l", string.upper))
-        vim.keymap.set(mode, lhs, function()
+        vim.keymap.set(mode, lhs, type(action) == "string" and action or function()
           return action(self)
         end, km_opts)
       end
