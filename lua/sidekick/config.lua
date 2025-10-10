@@ -65,20 +65,20 @@ local defaults = {
       ---@type table<string, sidekick.cli.Keymap|false>
       -- stylua: ignore
       keys = {
+        hide_n        = { "q"    , "hide"      , mode = "n" , desc = "hide the terminal window" },
+        hide_ctrl_q   = { "<c-q>", "hide"      , mode = "n" , desc = "hide the terminal window" },
+        hide_ctrl_dot = { "<c-.>", "hide"      , mode = "nt", desc = "hide the terminal window" },
+        hide_ctrl_z   = { "<c-z>", "hide"      , mode = "nt", desc = "hide the terminal window" },
+        prompt        = { "<c-p>", "prompt"    , mode = "t" , desc = "insert prompt or context" },
+        stopinsert    = { "<c-q>", "stopinsert", mode = "t" , desc = "enter normal mode" },
         -- Navigate windows in terminal mode. Only active when:
         -- * layout is not "float"
         -- * there is another window in the direction
         -- With the default layout of "right", only `<c-h>` will be mapped
-        nav_left      = { "<c-h>", "nav_left"  , expr = true }, -- navigate to the left window
-        nav_down      = { "<c-j>", "nav_down"  , expr = true }, -- navigate to the below window
-        nav_up        = { "<c-k>", "nav_up"    , expr = true }, -- navigate to the above window
-        nav_right     = { "<c-l>", "nav_right" , expr = true }, -- navigate to the right window
-        hide_n        = { "q"    , "hide"      , mode = "n"  }, -- hide the terminal window in normal mode
-        hide_ctrl_q   = { "<c-q>", "hide"      , mode = "n"  }, -- hide the terminal window in normal mode
-        hide_ctrl_dot = { "<c-.>", "hide"      , mode = "nt" }, -- hide the terminal window in terminal mode
-        hide_ctrl_z   = { "<c-z>", "hide"      , mode = "nt" }, -- hide the terminal window in terminal mode
-        prompt        = { "<c-p>", "prompt"    , mode = "t"  }, -- insert prompt or context
-        stopinsert    = { "<c-q>", "stopinsert", mode = "t"  }, -- enter normal mode
+        nav_left      = { "<c-h>", "nav_left"  , expr = true, desc = "navigate to the left window" },
+        nav_down      = { "<c-j>", "nav_down"  , expr = true, desc = "navigate to the below window" },
+        nav_up        = { "<c-k>", "nav_up"    , expr = true, desc = "navigate to the above window" },
+        nav_right     = { "<c-l>", "nav_right" , expr = true, desc = "navigate to the right window" },
       },
     },
     ---@class sidekick.cli.Mux
