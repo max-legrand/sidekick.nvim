@@ -101,7 +101,6 @@ function M:init()
   self.ctime = vim.uv.hrtime()
   self.atime = self.ctime
   self.send_queue = {}
-  self.attached = true
   self.group = vim.api.nvim_create_augroup("sidekick_cli_" .. self.id, { clear = true })
   M.terminals[self.id] = self
   if Config.cli.win.config then
@@ -110,9 +109,7 @@ function M:init()
   return self
 end
 
-function M:attach()
-  self.attached = true
-end
+function M:attach() end
 
 function M:is_running()
   return self.job and vim.fn.jobwait({ self.job }, 0)[1] == -1
@@ -254,7 +251,6 @@ function M:start()
   end
   self.pids = { vim.fn.jobpid(self.job) }
   self.started = true
-  self.attached = true
 
   self.timer = vim.uv.new_timer()
   self.timer:start(INITIAL_SEND_DELAY, SEND_DELAY, function()
@@ -347,7 +343,17 @@ function M:hide()
   return self
 end
 
+function M:detach()
+  return self
+end
+
 function M:close()
+  if self.closed then
+    return self
+  end
+  self.closed = true
+  self:blur()
+
   M.terminals[self.id] = nil
   if vim.tbl_isempty(M.terminals) then
     require("sidekick.cli.watch").disable()
@@ -357,7 +363,6 @@ function M:close()
     self.timer:close()
     self.timer = nil
   end
-  self.closed = true
   self:hide()
   if self:is_running() then
     vim.fn.jobstop(self.job)

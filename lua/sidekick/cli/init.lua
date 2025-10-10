@@ -150,11 +150,9 @@ end
 ---@overload fun(name: string)
 function M.close(opts)
   opts = filter_opts(opts)
-  State.with(function(state)
-    return state.terminal and state.terminal:close()
-  end, {
+  State.with(State.detach, {
     all = opts.all,
-    filter = Util.merge(opts.filter, { terminal = true }),
+    filter = Util.merge(opts.filter),
   })
 end
 

@@ -200,4 +200,17 @@ function M.attach(state, opts)
   return state, attached
 end
 
+---@param state sidekick.cli.State
+function M.detach(state)
+  if state.session and state.attached then
+    if state.terminal then
+      state.terminal:close()
+    else
+      Session.detach(state.session)
+      Util.info("Detached from `" .. state.tool.name .. "`")
+    end
+  end
+  return state
+end
+
 return M
