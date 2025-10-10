@@ -50,6 +50,7 @@ local function filter_opts(opts)
   return opts
 end
 
+--- Select a prompt to send
 ---@param opts? sidekick.cli.Prompt|{cb:nil}
 ---@overload fun(cb:fun(msg?:string))
 function M.prompt(opts)
@@ -63,6 +64,7 @@ function M.prompt(opts)
   require("sidekick.cli.ui.prompt").select(opts)
 end
 
+--- Start or attach to a CLI tool
 ---@param opts? sidekick.cli.Select|{cb:nil}|{focus?:boolean}
 ---@overload fun(cb:fun(state?:sidekick.cli.State))
 function M.select(opts)
@@ -156,11 +158,13 @@ function M.close(opts)
   })
 end
 
+-- Render a message template or prompt
 ---@param opts? sidekick.cli.Message|string
 function M.render(opts)
   return Context.get():render(opts or "")
 end
 
+--- Send a message or prompt to a CLI
 ---@param opts? sidekick.cli.Send
 ---@overload fun(msg:string)
 function M.send(opts)

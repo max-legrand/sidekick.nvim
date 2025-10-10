@@ -9,6 +9,9 @@ local M = {}
 ---@type sidekick.command.Cmd
 M.commands = {
   nes = {
+    apply = function()
+      require("sidekick.nes").apply()
+    end,
     enable = function()
       require("sidekick.nes").enable(true)
     end,
@@ -23,6 +26,9 @@ M.commands = {
     end,
     clear = function()
       require("sidekick.nes").clear()
+    end,
+    jump = function()
+      require("sidekick.nes").jump()
     end,
   },
   cli = {

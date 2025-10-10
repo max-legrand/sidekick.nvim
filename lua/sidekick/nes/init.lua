@@ -23,7 +23,7 @@ M.enabled = false
 M.did_setup = false
 
 -- Copilot requires the custom didFocus notification
-function M.did_focus()
+local function did_focus()
   if not M.enabled then
     return
   end
@@ -43,7 +43,7 @@ function M.enable(enable)
   if M.enabled then
     Config.nes.enabled = Config.nes.enabled == false and true or Config.nes.enabled
     M.setup()
-    M.did_focus()
+    did_focus()
     M.update()
   else
     M.clear()
@@ -54,6 +54,11 @@ function M.toggle()
   M.enable(not M.enabled)
 end
 
+function M.disable()
+  M.enable(false)
+end
+
+---@private
 function M.setup()
   if M.did_setup then
     return
@@ -100,6 +105,7 @@ local function is_enabled(buf)
   return enabled ~= false
 end
 
+-- Request new edits from the LSP server (if any)
 function M.update()
   local buf = vim.api.nvim_get_current_buf()
   M.clear()
@@ -124,6 +130,7 @@ function M.update()
   end
 end
 
+---@private
 ---@param buf? number
 function M.get(buf)
   ---@param edit sidekick.NesEdit
@@ -141,6 +148,7 @@ function M.get(buf)
   end, M._edits)
 end
 
+-- Clear all active edits
 function M.clear()
   M.cancel()
   M._edits = {}
@@ -148,6 +156,7 @@ function M.clear()
 end
 
 --- Cancel pending requests
+---@private
 function M.cancel()
   for client_id, request_id in pairs(M._requests) do
     M._requests[client_id] = nil
@@ -197,6 +206,7 @@ end
 
 ---@param buf number
 ---@param pos sidekick.Pos
+---@private
 function M.fix_pos(buf, pos)
   local last_line = vim.api.nvim_buf_line_count(buf) - 1
   if pos[1] > last_line then
@@ -205,7 +215,8 @@ function M.fix_pos(buf, pos)
   return pos
 end
 
----@return boolean true if jumped
+--- Jump to the start of the active edit
+---@return boolean jumped
 function M.jump()
   local buf = vim.api.nvim_get_current_buf()
   if not is_enabled(buf) then
@@ -252,6 +263,7 @@ function M._jump(pos)
   return true
 end
 
+-- Check if any edits are active in the current buffer
 function M.have()
   local buf = vim.api.nvim_get_current_buf()
   if not is_enabled(buf) then
@@ -260,7 +272,8 @@ function M.have()
   return #M.get(buf) > 0
 end
 
----@return boolean true if text edit was applied
+--- Apply active text edits
+---@return boolean applied
 function M.apply()
   local buf = vim.api.nvim_get_current_buf()
   if not is_enabled(buf) then

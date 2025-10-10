@@ -17,6 +17,7 @@ require("lazy.minit").setup({
       opts = {},
     },
     { "nvim-treesitter/nvim-treesitter-textobjects", branch = "main" },
+    { "folke/snacks.nvim" },
     {
       "nvim-treesitter/nvim-treesitter",
       branch = "main",

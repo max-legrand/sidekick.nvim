@@ -394,15 +394,81 @@ local defaults = {
 Copilot NES requests run automatically when you leave insert mode,
 modify text in normal mode, or after applying an edit.
 
-Use the helper functions to control suggestions manually:
+<!-- api_nes:start -->
 
-- `require("sidekick.nes").update()` – request fresh edits for the current buffer.
-- `require("sidekick.nes").jump()` – move the cursor to the first suggested hunk.
-- `require("sidekick.nes").apply()` – apply all pending edits and emit the
-  `User SidekickNesDone` autocmd.
-- `require("sidekick").clear()` – cancel requests and hide overlays.
-- `require("sidekick.nes").have()` – check if any edits are active in the buffer.
-  after an edit has been applied.
+<table><tr><th>Cmd</th><th>Lua</th></tr>
+<tr><td><code>:Sidekick nes apply</code> Apply active text edits</td><td>
+
+
+```lua
+---@return boolean applied
+require("sidekick.nes").apply()
+```
+
+</td></tr>
+<tr><td><code>:Sidekick nes clear</code> Clear all active edits</td><td>
+
+
+```lua
+require("sidekick.nes").clear()
+```
+
+</td></tr>
+<tr><td><code>:Sidekick nes disable</code> </td><td>
+
+
+```lua
+
+require("sidekick.nes").disable()
+```
+
+</td></tr>
+<tr><td><code>:Sidekick nes enable</code> </td><td>
+
+
+```lua
+---@param enable? boolean
+require("sidekick.nes").enable(enable)
+```
+
+</td></tr>
+<tr><td> Check if any edits are active in the current buffer</td><td>
+
+
+```lua
+require("sidekick.nes").have()
+```
+
+</td></tr>
+<tr><td><code>:Sidekick nes jump</code> Jump to the start of the active edit</td><td>
+
+
+```lua
+---@return boolean jumped
+require("sidekick.nes").jump()
+```
+
+</td></tr>
+<tr><td><code>:Sidekick nes toggle</code> </td><td>
+
+
+```lua
+
+require("sidekick.nes").toggle()
+```
+
+</td></tr>
+<tr><td><code>:Sidekick nes update</code> Request new edits from the LSP server (if any)</td><td>
+
+
+```lua
+require("sidekick.nes").update()
+```
+
+</td></tr>
+</table>
+
+<!-- api_nes:end -->
 
 ## 🤖 AI CLI Integration
 
@@ -411,41 +477,101 @@ tools without leaving Neovim. Each tool runs in its own scratch terminal window 
 shares helper prompts that bundle buffer context, the current cursor position, and
 diagnostics when requested.
 
-- `require("sidekick.cli").toggle()` – open or focus the most recent tool, or pick one if none are running.
-- `require("sidekick.cli").select()` – select a tool to open from a list of all configured tools.
-- `require("sidekick.cli").send({ prompt = "review", submit = true })` – format a prompt,
-  push it to the active tool, and send it immediately.
-- `require("sidekick.cli").send({ msg = "What does this do?", submit = true })` – same as above,
-  but with a custom message.
-- `require("sidekick.cli").prompt()` – browse the prompt presets (Snacks picker is
-  used when available).
+<!-- api_cli:start -->
 
-<details>
-<summary>Keymaps that pair well with the defaults:</summary>
+<table><tr><th>Cmd</th><th>Lua</th></tr>
+<tr><td><code>:Sidekick cli close</code> </td><td>
+
 
 ```lua
-{
-  {
-    "<leader>aa",
-    function()
-      require("sidekick.cli").toggle({ focus = true })
-    end,
-    desc = "Sidekick Toggle CLI",
-  },
-  {
-    "<leader>ap",
-    function()
-      require("sidekick.cli").prompt()
-    end,
-    desc = "Sidekick Prompt Picker",
-  },
-}
+---@param opts? sidekick.cli.Hide
+---@overload fun(name: string)
+require("sidekick.cli").close(opts)
 ```
 
-</details>
+</td></tr>
+<tr><td><code>:Sidekick cli focus</code> Toggle focus of the terminal window if it is already open</td><td>
 
-Tune the behaviour via `Config.cli`: add your own tool definitions, tweak window
-layout, or extend the prompt list. See the defaults above for all available fields.
+
+```lua
+---@param opts? sidekick.cli.Show
+---@overload fun(name: string)
+require("sidekick.cli").focus(opts)
+```
+
+</td></tr>
+<tr><td><code>:Sidekick cli hide</code> </td><td>
+
+
+```lua
+---@param opts? sidekick.cli.Hide
+---@overload fun(name: string)
+require("sidekick.cli").hide(opts)
+```
+
+</td></tr>
+<tr><td><code>:Sidekick cli prompt</code> Select a prompt to send</td><td>
+
+
+```lua
+---@param opts? sidekick.cli.Prompt|{cb:nil}
+---@overload fun(cb:fun(msg?:string))
+require("sidekick.cli").prompt(opts)
+```
+
+</td></tr>
+<tr><td> Render a message template or prompt</td><td>
+
+
+```lua
+---@param opts? sidekick.cli.Message|string
+require("sidekick.cli").render(opts)
+```
+
+</td></tr>
+<tr><td><code>:Sidekick cli select</code> Start or attach to a CLI tool</td><td>
+
+
+```lua
+---@param opts? sidekick.cli.Select|{cb:nil}|{focus?:boolean}
+---@overload fun(cb:fun(state?:sidekick.cli.State))
+require("sidekick.cli").select(opts)
+```
+
+</td></tr>
+<tr><td><code>:Sidekick cli send</code> Send a message or prompt to a CLI</td><td>
+
+
+```lua
+---@param opts? sidekick.cli.Send
+---@overload fun(msg:string)
+require("sidekick.cli").send(opts)
+```
+
+</td></tr>
+<tr><td><code>:Sidekick cli show</code> </td><td>
+
+
+```lua
+---@param opts? sidekick.cli.Show
+---@overload fun(name: string)
+require("sidekick.cli").show(opts)
+```
+
+</td></tr>
+<tr><td><code>:Sidekick cli toggle</code> </td><td>
+
+
+```lua
+---@param opts? sidekick.cli.Show
+---@overload fun(name: string)
+require("sidekick.cli").toggle(opts)
+```
+
+</td></tr>
+</table>
+
+<!-- api_cli:end -->
 
 ### Prompts & Context
 
