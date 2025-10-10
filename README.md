@@ -287,10 +287,6 @@ local defaults = {
         width = 80,
         height = 20,
       },
-      ---@type fun(dir:"h"|"j"|"k"|"l")?
-      --- Function that handles navigation between windows.
-      --- Defaults to `vim.cmd.wincmd`.
-      nav = nil,
       --- CLI Tool Keymaps (default mode is `t`)
       ---@type table<string, sidekick.cli.Keymap|false>
       keys = {
@@ -309,6 +305,10 @@ local defaults = {
         nav_up        = { "<c-k>", "nav_up"    , expr = true, desc = "navigate to the above window" },
         nav_right     = { "<c-l>", "nav_right" , expr = true, desc = "navigate to the right window" },
       },
+      ---@type fun(dir:"h"|"j"|"k"|"l")?
+      --- Function that handles navigation between windows.
+      --- Defaults to `vim.cmd.wincmd`. Used by the `nav_*` keymaps.
+      nav = nil,
     },
     ---@class sidekick.cli.Mux
     ---@field backend? "tmux"|"zellij" Multiplexer backend to persist CLI sessions
