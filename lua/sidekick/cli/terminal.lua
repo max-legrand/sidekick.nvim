@@ -482,11 +482,13 @@ function M:scrollback()
   vim.api.nvim_create_autocmd({ "TermEnter" }, {
     buffer = buf,
     callback = function()
-      vim.api.nvim_win_set_buf(self.win, self.buf)
-      self:wo()
-      if vim.api.nvim_buf_is_valid(buf) then
-        pcall(vim.api.nvim_buf_delete, buf, { force = true })
-      end
+      vim.cmd.stopinsert()
+      vim.schedule(function()
+        if self:buf_valid() and self:win_valid() then
+          vim.api.nvim_win_set_buf(self.win, self.buf)
+          self:wo()
+        end
+      end)
     end,
   })
   vim.api.nvim_create_autocmd({ "TextChangedT", "TextChanged" }, {
