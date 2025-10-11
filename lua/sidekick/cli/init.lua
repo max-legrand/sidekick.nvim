@@ -17,6 +17,7 @@ local M = {}
 ---@field url? string Web URL to open when the tool is not installed
 ---@field keys? table<string, sidekick.cli.Keymap|false>
 ---@field is_proc? (fun(self:sidekick.cli.Tool, proc:sidekick.cli.Proc):boolean)|string Regex or function to identity a running process
+---@field mux_focus? boolean wether the tool needs to be focused in order to receive input
 
 ---@class sidekick.cli.Show
 ---@field name? string
