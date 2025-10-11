@@ -110,7 +110,6 @@ end
 ---@param msg string
 function C:render_line(msg)
   local ret = { {} } ---@type sidekick.Text[]
-  local pos = 1
   ---@param t sidekick.Text
   ---@param nl? boolean
   local function add(t, nl)
@@ -119,13 +118,9 @@ function C:render_line(msg)
     end
     vim.list_extend(ret[#ret], t)
   end
-  while pos <= #msg do
-    local from, to, key = msg:find("(%b{})", pos)
-    if from and to and key then
-      ret[#ret] = ret[#ret] or {}
-      if from > pos then
-        add({ { msg:sub(pos, from - 1) } })
-      end
+  for _, key in ipairs(Text.split(msg, "%b{}")) do
+    ret[#ret] = ret[#ret] or {}
+    if key:match("^%b{}$") then
       local value = self:get(key:sub(2, -2))
       if not value then
         return -- fail if any replacement failed
@@ -133,13 +128,9 @@ function C:render_line(msg)
       for i, vt in ipairs(value or {}) do
         add(vt, i > 1)
       end
-      pos = to + 1
     else
-      break
+      add({ { key } })
     end
-  end
-  if pos <= #msg then
-    add({ { msg:sub(pos) } })
   end
   return ret
 end

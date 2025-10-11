@@ -123,4 +123,27 @@ function M.to_text(data)
   return data
 end
 
+--- Split a str by a pattern, keeping the pattern matches
+---@param str string
+function M.split(str, pattern)
+  local ret = {} ---@type string[]
+  local pos = 1
+  while pos <= #str do
+    local from, to, key = str:find("(" .. pattern .. ")", pos)
+    if from and to and key then
+      if from > pos then
+        ret[#ret + 1] = str:sub(pos, from - 1)
+      end
+      ret[#ret + 1] = key
+      pos = to + 1
+    else
+      break
+    end
+  end
+  if pos <= #str then
+    ret[#ret + 1] = str:sub(pos)
+  end
+  return ret
+end
+
 return M

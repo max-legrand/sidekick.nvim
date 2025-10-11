@@ -14,12 +14,20 @@ function M.select(opts)
   local prompts = vim.tbl_keys(Config.cli.prompts) ---@type string[]
   table.sort(prompts)
   local context = Context.get()
-  local test = Context.get()
-  test.get = function(_, name)
-    if name == "nl" then
-      return { { { "\\n", "@string.escape" } } }
-    end
-    return { { { ("{%s}"):format(name), "Special" } } }
+
+  ---@param msg string
+  local function tpl(msg)
+    msg = msg:gsub("\n", "{nl}")
+    local parts = require("sidekick.text").split(msg, "%b{}")
+    ---@param part string
+    return vim.tbl_map(function(part)
+      if part == "{nl}" then
+        return { "\\n", "@string.escape" }
+      elseif part:match("^%b{}$") then
+        return { part, "Special" }
+      end
+      return { part }
+    end, parts)
   end
 
   local items = {} ---@type snacks.picker.finder.Item[]
@@ -72,8 +80,7 @@ function M.select(opts)
         local ret = {} ---@type snacks.picker.Highlight[]
         ret[#ret + 1] = { item.name, "Title" }
         ret[#ret + 1] = { string.rep(" ", 18 - #item.name) }
-        local _, prompt = test:render({ msg = item.prompt.msg:gsub("\n", "{nl}"), this = false })
-        vim.list_extend(ret, prompt and prompt[1] or {})
+        vim.list_extend(ret, tpl(item.prompt.msg))
         return ret
       end
       return ("[%s] %s"):format(item.name, string.rep(" ", 18 - #item.name) .. item.prompt.msg)
@@ -82,8 +89,7 @@ function M.select(opts)
       preview = "preview",
       layout = {
         preset = "vscode",
-        min_height = 0.6,
-        preview = true,
+        hidden = {},
       },
       win = {
         input = {
