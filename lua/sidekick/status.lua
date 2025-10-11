@@ -42,6 +42,9 @@ end
 ---@param buf? integer
 ---@return sidekick.lsp.Status?
 function M.get(buf)
+  if not Config.copilot.status.enabled then
+    return
+  end
   local client = Config.get_client(buf)
   return client and (status[client.id] or { busy = false, kind = "Normal" }) or nil
 end
