@@ -462,7 +462,7 @@ function M:scrollback()
     local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
     for l = #lines, 1, -1 do
       if lines[l]:find("%S") then
-        return vim.api.nvim_win_set_cursor(self.win, { math.max(l + 1, 1), 0 })
+        return vim.api.nvim_win_set_cursor(self.win, { math.min(l + 1, #lines), 0 })
       end
     end
   end
