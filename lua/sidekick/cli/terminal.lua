@@ -256,7 +256,12 @@ function M:start()
     if next then
       vim.schedule(function()
         if self:is_running() then
-          vim.api.nvim_chan_send(self.job, next)
+          -- Use nvim_paste to send input to the terminal
+          -- instead of nvim_chan_send to better simulate user input
+          -- vim.api.nvim_chan_send(self.job, next)
+          vim.api.nvim_buf_call(self.buf, function()
+            vim.api.nvim_paste(next, true, 1)
+          end)
         end
       end)
     end
