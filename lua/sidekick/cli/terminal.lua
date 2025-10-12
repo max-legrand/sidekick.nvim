@@ -166,14 +166,12 @@ function M:start()
   vim.api.nvim_create_autocmd("TermLeave", {
     group = self.group,
     buffer = self.buf,
-    callback = function(ev)
-      if ev.buf ~= self.buf then
+    callback = vim.schedule_wrap(function()
+      if self.buf ~= vim.api.nvim_get_current_buf() or vim.fn.mode() == "t" then
         return
       end
-      vim.schedule(function()
-        self:scrollback()
-      end)
-    end,
+      self:scrollback()
+    end),
   })
 
   -- Neovim sets defaults, so we need to reset them
