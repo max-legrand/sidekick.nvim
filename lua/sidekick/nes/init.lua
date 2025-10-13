@@ -79,7 +79,7 @@ function M.setup()
 
   on(Config.nes.clear.events, M.clear)
   on(Config.nes.trigger.events, Util.debounce(M.update, Config.nes.debounce))
-  on({ "BufEnter", "WinEnter" }, Util.debounce(M.did_focus, 10))
+  on({ "BufEnter", "WinEnter" }, Util.debounce(did_focus, 10))
 
   if Config.nes.clear.esc then
     local ESC = vim.keycode("<Esc>")
