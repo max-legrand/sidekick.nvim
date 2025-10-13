@@ -114,7 +114,7 @@ local defaults = {
       opencode = {
         cmd = { "opencode" },
         -- HACK: https://github.com/sst/opencode/issues/445
-        env = { OPENCODE_THEME = "system" },
+        -- env = { OPENCODE_THEME = "system" },
       },
       qwen = { cmd = { "qwen" } },
     },
