@@ -90,6 +90,23 @@ function M.sessions()
   return vim.tbl_values(M.terminals)
 end
 
+local SCROLL_WHEEL_UP = vim.keycode("<ScrollWheelUp>")
+local SCROLL_WHEEL_DOWN = vim.keycode("<ScrollWheelDown>")
+
+-- track mouse scrolling
+vim.on_key(function(key, typed)
+  key = typed or key
+  if key ~= SCROLL_WHEEL_UP and key ~= SCROLL_WHEEL_DOWN then
+    return
+  end
+  local mouse_win = vim.fn.getmousepos().winid
+  local session_id = vim.w[mouse_win].sidekick_session_id
+  local term = session_id and M.get(session_id)
+  if term then
+    term:on_scroll()
+  end
+end)
+
 ---@param opts sidekick.cli.session.Opts
 function M.new(opts)
   opts.backend = "terminal"
@@ -271,6 +288,12 @@ function M:start()
   end
 end
 
+function M:on_scroll()
+  if self.buf == vim.api.nvim_win_get_buf(self.win) and vim.fn.mode() == "t" then
+    self:scrollback()
+  end
+end
+
 function M:open_win()
   if self:is_open() or not self.buf then
     return
@@ -307,6 +330,7 @@ function M:open_win()
     vim.wo[self.win].winfixwidth = true
   end
   vim.w[self.win].sidekick_cli = self.tool
+  vim.w[self.win].sidekick_session_id = self.id
   self:wo()
 end
 
