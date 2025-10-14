@@ -175,7 +175,7 @@ function M.send(opts)
   end
 
   local msg = opts.render ~= false and M.render(opts) or opts.msg
-  if not msg then
+  if vim.trim(msg or "") == "" then
     Util.warn("Nothing to send.")
     return
   end
