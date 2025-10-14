@@ -280,7 +280,7 @@ function M:start()
           -- instead of nvim_chan_send to better simulate user input
           -- vim.api.nvim_chan_send(self.job, next)
           vim.api.nvim_buf_call(self.buf, function()
-            vim.api.nvim_paste(next, true, 1)
+            vim.api.nvim_paste(next, true, -1)
           end)
         end
       end)
