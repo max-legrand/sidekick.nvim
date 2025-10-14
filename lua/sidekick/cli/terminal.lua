@@ -99,6 +99,9 @@ vim.on_key(function(key, typed)
   if key ~= SCROLL_WHEEL_UP and key ~= SCROLL_WHEEL_DOWN then
     return
   end
+  if vim.fn.mode() ~= "t" then
+    return
+  end
   local mouse_win = vim.fn.getmousepos().winid
   local session_id = vim.w[mouse_win].sidekick_session_id
   local term = session_id and M.get(session_id)
