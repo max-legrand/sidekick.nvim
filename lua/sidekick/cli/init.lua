@@ -175,9 +175,11 @@ function M.send(opts)
   end
 
   local msg = opts.render ~= false and M.render(opts) or opts.msg
-  if vim.trim(msg or "") == "" then
+  if msg == "" then
     Util.warn("Nothing to send.")
     return
+  elseif msg == "\n" then
+    msg = "" -- allow sending a new line
   end
 
   State.with(function(state)
