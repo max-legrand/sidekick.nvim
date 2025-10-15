@@ -277,11 +277,11 @@ function M:start()
       next = next:gsub("\r\n", "\n") -- normalize line endings
       vim.schedule(function()
         if self:is_running() then
-          -- Use nvim_paste to send input to the terminal
+          -- Use nvim_put to send input to the terminal
           -- instead of nvim_chan_send to better simulate user input
           -- vim.api.nvim_chan_send(self.job, next)
           vim.api.nvim_buf_call(self.buf, function()
-            vim.api.nvim_paste(next, false, -1)
+            vim.api.nvim_put(vim.split(next, "\n", { plain = true }), "c", false, true)
           end)
         end
       end)
