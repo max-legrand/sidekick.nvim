@@ -371,7 +371,7 @@ end
 
 function M:hide()
   if self:is_open() then
-    vim.api.nvim_win_close(self.win, true)
+    pcall(vim.api.nvim_win_close, self.win, true)
     self.win = nil
   end
   return self
