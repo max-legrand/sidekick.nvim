@@ -170,29 +170,27 @@ function M:start()
   self:keys()
   self:open_win()
 
-  vim.api.nvim_create_autocmd("BufEnter", {
+  -- track if we are in normal mode or terminal mode
+  vim.api.nvim_create_autocmd("TermLeave", {
     group = self.group,
-    buffer = self.buf,
     callback = function()
-      self.atime = vim.uv.hrtime()
+      self.normal_mode = false
       vim.schedule(function()
-        if vim.api.nvim_get_current_buf() == self.buf then
-          vim.cmd.startinsert()
-        end
+        self.normal_mode = self:is_focused()
       end)
     end,
   })
 
-  vim.api.nvim_create_autocmd("TermLeave", {
+  -- restore mode when entering the sidekick window
+  vim.api.nvim_create_autocmd("WinEnter", {
     group = self.group,
-    buffer = self.buf,
-    callback = vim.schedule_wrap(function()
-      if self.buf ~= vim.api.nvim_get_current_buf() or vim.fn.mode() == "t" then
-        return
+    callback = function()
+      if self:is_focused() then
+        self.atime = vim.uv.hrtime()
+        if not self.normal_mode then
+          vim.cmd.startinsert()
+        end
       end
-      self:scrollback()
-    end),
-  })
 
   -- Neovim sets defaults, so we need to reset them
   -- See |terminal-config
