@@ -21,7 +21,11 @@ M._edits = {} ---@type sidekick.NesEdit[]
 M._requests = {} ---@type table<number, number>
 M.enabled = false
 M.did_setup = false
-M.focus_last = ""
+
+---@type table<vim.lsp.Client, string>
+M.focus_notified = setmetatable({}, {
+  __mode = "k",
+})
 
 -- Copilot requires the custom didFocus notification
 local function did_focus()
@@ -34,14 +38,14 @@ local function did_focus()
     return -- don't send for special buffer
   end
   local uri = vim.uri_from_bufnr(buf)
-  if uri == M.focus_last then
-    return -- already focused
-  end
-  M.focus_last = uri
 
-  local client = Config.get_client(buf)
-  ---@diagnostic disable-next-line: param-type-mismatch
-  return client and client:notify("textDocument/didFocus", { textDocument = { uri = vim.uri_from_bufnr(buf) } }) or nil
+  for _, client in ipairs(Config.get_clients({ bufnr = buf })) do
+    if M.focus_notified[client] ~= uri then
+      M.focus_notified[client] = uri
+      ---@diagnostic disable-next-line: param-type-mismatch
+      client:notify("textDocument/didFocus", { textDocument = { uri = uri } })
+    end
+  end
 end
 
 ---@param enable? boolean
@@ -54,7 +58,6 @@ function M.enable(enable)
   if M.enabled then
     Config.nes.enabled = Config.nes.enabled == false and true or Config.nes.enabled
     M.setup()
-    did_focus()
     M.update()
   else
     M.clear()
@@ -76,7 +79,7 @@ function M.setup()
   end
   M.did_setup = true
   ---@param events string[]
-  ---@param fn fun()
+  ---@param fn fun(ev:vim.api.keyset.create_autocmd.callback_args)
   local function on(events, fn)
     for _, event in ipairs(events) do
       local name, pattern = event:match("^(%S+)%s*(.*)$") --[[@as string, string]]
@@ -100,6 +103,15 @@ function M.setup()
       end
     end, nil)
   end
+
+  on({ "LspAttach" }, function(ev)
+    local client = vim.lsp.get_client_by_id(ev.data.client_id)
+    if client and Config.is_copilot(client) then
+      did_focus()
+    end
+  end)
+
+  did_focus()
 end
 
 ---@param buf? integer
