@@ -18,6 +18,8 @@ local Util = require("sidekick.util")
 ---@field job? integer
 ---@field buf? integer
 ---@field win? integer
+---@field scrollback sidekick.cli.Scrollback
+---@field normal_mode? boolean
 local M = {}
 M.__index = M
 M.priority = 100
@@ -90,26 +92,6 @@ function M.sessions()
   return vim.tbl_values(M.terminals)
 end
 
-local SCROLL_WHEEL_UP = vim.keycode("<ScrollWheelUp>")
-local SCROLL_WHEEL_DOWN = vim.keycode("<ScrollWheelDown>")
-
--- track mouse scrolling
-vim.on_key(function(key, typed)
-  key = typed or key
-  if key ~= SCROLL_WHEEL_UP and key ~= SCROLL_WHEEL_DOWN then
-    return
-  end
-  if vim.fn.mode() ~= "t" then
-    return
-  end
-  local mouse_win = vim.fn.getmousepos().winid
-  local session_id = vim.w[mouse_win].sidekick_session_id
-  local term = session_id and M.get(session_id)
-  if term then
-    term:on_scroll()
-  end
-end)
-
 ---@param opts sidekick.cli.session.Opts
 function M.new(opts)
   opts.backend = "terminal"
@@ -126,6 +108,7 @@ function M:init()
   if Config.cli.win.config then
     Config.cli.win.config(self)
   end
+  self.scrollback = require("sidekick.cli.scrollback").new(self)
   return self
 end
 
@@ -151,10 +134,10 @@ function M:bo(buf)
   end
 end
 
-function M:wo()
-  for k, v in pairs(merge(vim.deepcopy(wo), self.opts.wo)) do
-    ---@diagnostic disable-next-line: no-unknown
-    vim.wo[self.win][k] = v
+---@param opts? vim.wo
+function M:wo(opts)
+  for k, v in pairs(merge(vim.deepcopy(wo), vim.deepcopy(self.opts.wo), opts or {})) do
+    vim.api.nvim_set_option_value(k, v, { win = self.win, scope = "local" })
   end
 end
 
@@ -191,16 +174,6 @@ function M:start()
           vim.cmd.startinsert()
         end
       end
-
-  -- Neovim sets defaults, so we need to reset them
-  -- See |terminal-config
-  vim.api.nvim_create_autocmd("TermOpen", {
-    group = self.group,
-    callback = function(ev)
-      if vim.api.nvim_get_current_win() ~= self.win then
-        return
-      end
-      self:wo()
     end,
   })
 
@@ -290,12 +263,6 @@ function M:start()
   end
 end
 
-function M:on_scroll()
-  if self.buf == vim.api.nvim_win_get_buf(self.win) and vim.fn.mode() == "t" then
-    self:scrollback()
-  end
-end
-
 function M:open_win()
   if self:is_open() or not self.buf then
     return
@@ -355,7 +322,7 @@ function M:blur()
 end
 
 function M:is_focused()
-  return self:is_open() and vim.api.nvim_get_current_win() == self.win
+  return vim.api.nvim_get_current_win() == self.win
 end
 
 function M:show()
@@ -485,52 +452,6 @@ end
 
 function M:is_float()
   return self.opts.layout == "float"
-end
-
-function M:scrollback()
-  ---@param buf integer
-  local function scroll(buf)
-    -- scroll to beginning of last non-whitespace line
-    local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-    for l = #lines, 1, -1 do
-      if lines[l]:find("%S") then
-        return vim.api.nvim_win_set_cursor(self.win, { math.min(l + 1, #lines), 0 })
-      end
-    end
-  end
-
-  local text = self.parent and self.parent:dump() or nil
-  if not text then
-    return scroll(self.buf)
-  end
-
-  -- proper scrollback support
-  text = text:gsub("\n$", "")
-  local buf = vim.api.nvim_create_buf(false, true)
-  self:bo(buf)
-  vim.bo[buf].bufhidden = "wipe"
-  vim.api.nvim_win_set_buf(self.win, buf)
-  local term = vim.api.nvim_open_term(buf, {})
-  vim.api.nvim_create_autocmd({ "TermEnter" }, {
-    buffer = buf,
-    callback = function()
-      vim.cmd.stopinsert()
-      vim.schedule(function()
-        if self:buf_valid() and self:win_valid() then
-          vim.api.nvim_win_set_buf(self.win, self.buf)
-          self:wo()
-        end
-      end)
-    end,
-  })
-  vim.api.nvim_create_autocmd({ "TextChangedT", "TextChanged" }, {
-    buffer = buf,
-    callback = function()
-      scroll(buf)
-    end,
-  })
-  vim.api.nvim_chan_send(term, text)
-  self:keys(buf)
 end
 
 return M
