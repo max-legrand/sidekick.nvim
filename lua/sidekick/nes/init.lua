@@ -145,6 +145,7 @@ function M.update()
   local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
   ---@diagnostic disable-next-line: inject-field
   params.textDocument.version = vim.lsp.util.buf_versions[buf]
+  params.context = { triggerKind = 2 }
 
   ---@diagnostic disable-next-line: param-type-mismatch
   local ok, request_id = client:request("textDocument/copilotInlineEdit", params, M._handler)
