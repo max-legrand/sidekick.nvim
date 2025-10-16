@@ -255,7 +255,7 @@ local defaults = {
     debounce = 100,
     trigger = {
       -- events that trigger sidekick next edit suggestions
-      events = { "InsertLeave", "TextChanged", "User SidekickNesDone" },
+      events = { "ModeChanged *:n", "TextChanged", "User SidekickNesDone" },
     },
     clear = {
       -- events that clear the current next edit suggestion
