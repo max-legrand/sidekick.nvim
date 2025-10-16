@@ -329,11 +329,16 @@ function M.apply()
     vim.lsp.util.apply_text_edits(text_edits, buf, client.offset_encoding)
 
     -- let the LSP server know
-    for _, edit in ipairs(edits) do
-      if edit.command then
-        client:exec_cmd(edit.command, { bufnr = buf })
+    vim.schedule(function()
+      for _, edit in ipairs(edits) do
+        if edit.command then
+          client:exec_cmd(edit.command, { bufnr = buf })
+        end
       end
-    end
+
+      -- notify that we're done
+      Util.emit("SidekickNesDone", { client_id = client.id, buffer = buf })
+    end)
 
     -- jump to end of last edit
     local pos = vim.deepcopy(last.from)
@@ -342,8 +347,6 @@ function M.apply()
       pos[2] = pos[2] + #diff.to.text
     end
     M._jump(pos)
-
-    Util.emit("SidekickNesDone", { client_id = client.id, buffer = buf })
   end)
   M.clear()
   return true
