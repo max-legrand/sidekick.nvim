@@ -21,13 +21,24 @@ M._edits = {} ---@type sidekick.NesEdit[]
 M._requests = {} ---@type table<number, number>
 M.enabled = false
 M.did_setup = false
+M.focus_last = ""
 
 -- Copilot requires the custom didFocus notification
 local function did_focus()
   if not M.enabled then
     return
   end
+
   local buf = vim.api.nvim_get_current_buf()
+  if vim.bo[buf].buftype ~= "" then
+    return -- don't send for special buffer
+  end
+  local uri = vim.uri_from_bufnr(buf)
+  if uri == M.focus_last then
+    return -- already focused
+  end
+  M.focus_last = uri
+
   local client = Config.get_client(buf)
   ---@diagnostic disable-next-line: param-type-mismatch
   return client and client:notify("textDocument/didFocus", { textDocument = { uri = vim.uri_from_bufnr(buf) } }) or nil
