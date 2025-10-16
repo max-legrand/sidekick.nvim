@@ -192,7 +192,12 @@ function M._handler(err, res, ctx)
   for _, edit in ipairs(res.edits or {}) do
     local fname = vim.uri_to_fname(edit.textDocument.uri)
     local buf = vim.fn.bufnr(fname, false)
-    if buf and vim.api.nvim_buf_is_valid(buf) and is_enabled(buf) then
+    if
+      buf
+      and vim.api.nvim_buf_is_valid(buf)
+      and is_enabled(buf)
+      and edit.textDocument.version == vim.lsp.util.buf_versions[buf]
+    then
       ---@cast edit sidekick.NesEdit
       edit.buf = buf
       edit.from, edit.to = pos(buf, edit.range.start), pos(buf, edit.range["end"])
